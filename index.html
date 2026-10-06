@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>3NDING – Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="index.html">3NDING</a>
+        <nav aria-label="Main">
+          <a href="index.html" aria-current="page">Library</a
+          ><a href="favorites.html">Favorites</a>
+        </nav>
+      </div>
+    </header>
+    <main class="wrap">
+      <section id="recent" hidden>
+        <h2>Continue reading</h2>
+        <div class="rail" id="recentList"></div>
+      </section>
+      <section>
+        <h1>Library</h1>
+        <div class="tools">
+          <input
+            id="q"
+            type="search"
+            placeholder="Search title or author"
+            aria-label="Search books"
+          />
+          <select id="sort" aria-label="Sort books">
+            <option value="new">Newest</option>
+            <option value="old">Oldest</option>
+            <option value="ta">Title A–Z</option>
+            <option value="tz">Title Z–A</option>
+            <option value="aa">Author A–Z</option>
+            <option value="az">Author Z–A</option>
+          </select>
+        </div>
+        <p class="count" id="count" aria-live="polite"></p>
+        <div class="grid" id="grid"></div>
+        <nav class="pager" id="pager" aria-label="Pagination"></nav>
+      </section>
+    </main>
+    <div class="toast" id="toast" role="status"></div>
+    <script type="module" src="js/home.js"></script>
+  </body>
+</html>
