@@ -13,12 +13,21 @@ const OPTS = {
   theme: ["paper", "sepia", "dark", "oled"],
   align: ["left", "justify"],
 };
-let settings = { ...DEFAULTS, ...store.read("reader", {}) },
+// Validate stored settings so corrupt/old values can't break the page.
+function clean(s) {
+  const o = { ...DEFAULTS };
+  for (const k in OPTS) if (OPTS[k].includes(s?.[k])) o[k] = s[k];
+  const n = Math.round(+s?.size);
+  if (n >= 14 && n <= 32) o.size = n;
+  return o;
+}
+let settings = clean(store.read("reader", {})),
   book,
   manifest,
   read,
   chapter = 0,
-  saveTimer;
+  saveTimer,
+  token = 0;
 
 function apply() {
   root.dataset.theme = settings.theme;
@@ -32,13 +41,15 @@ function apply() {
     );
   const r = $("#size");
   if (r) r.value = settings.size;
+  const o = $("#sizeVal");
+  if (o) o.textContent = settings.size + " px";
   store.write("reader", settings);
 }
 function buildPanel() {
   const seg = (k) =>
     `<div class="seg">${OPTS[k].map((v) => `<button data-k="${k}" data-v="${v}">${v[0].toUpperCase() + v.slice(1)}</button>`).join("")}</div>`;
   $("#panel").innerHTML =
-    `<label>Font${seg("font")}</label><label>Theme${seg("theme")}</label><label>Font size<input id="size" type="range" min="14" max="32" step="1"></label><label>Alignment${seg("align")}</label><button class="btn" id="reset">Reset to defaults</button>`;
+    `<label>Font${seg("font")}</label><label>Theme${seg("theme")}</label><label><span class="row">Font size<b id="sizeVal"></b></span><input id="size" type="range" min="14" max="32" step="1"></label><label>Alignment${seg("align")}</label><button class="btn" id="reset">Reset to defaults</button>`;
   $("#panel").addEventListener("click", (e) => {
     const b = e.target.closest("[data-k]");
     if (b) {
@@ -57,10 +68,11 @@ function buildPanel() {
   });
 }
 const ratio = () => {
-  const m = document.documentElement.scrollHeight - innerHeight;
+  const m = root.scrollHeight - innerHeight;
   return m > 0 ? Math.min(1, scrollY / m) : 0;
 };
 function save() {
+  if (!book || !manifest) return;
   const p = store.read("progress", {});
   p[book.id] = {
     chapter,
@@ -73,11 +85,15 @@ function save() {
     ((chapter + ratio()) / manifest.chapters.length) * 100 + "%";
 }
 async function open(i, r = 0) {
+  const my = ++token; // ignore stale loads when the reader clicks quickly
   chapter = Math.max(0, Math.min(i, manifest.chapters.length - 1));
   const c = manifest.chapters[chapter];
-  $("#page").innerHTML = "<p>Loading…</p>";
+  $("#page").setAttribute("aria-busy", "true");
+  $("#page").innerHTML = '<p class="muted">Loading…</p>';
+  let ok = true;
   try {
     const text = await read(c.file);
+    if (my !== token) return;
     $("#page").innerHTML =
       `<h2>${esc(c.title)}</h2>` +
       text
@@ -86,14 +102,17 @@ async function open(i, r = 0) {
         .map((s) => `<p>${esc(s.trim()).replace(/\r?\n/g, " ")}</p>`)
         .join("");
   } catch (e) {
+    if (my !== token) return;
+    ok = false;
     $("#page").innerHTML = `<p>${esc(e.message)}</p>`;
   }
+  $("#page").removeAttribute("aria-busy");
   $("#chapters").value = chapter;
   $("#prev").disabled = chapter === 0;
   $("#next").disabled = chapter === manifest.chapters.length - 1;
   requestAnimationFrame(() => {
-    scrollTo(0, r * (document.documentElement.scrollHeight - innerHeight));
-    save();
+    scrollTo(0, r * (root.scrollHeight - innerHeight));
+    if (ok) save();
   });
 }
 async function init() {
@@ -109,6 +128,8 @@ async function init() {
     if (!res.ok) throw new Error("Could not download this book");
     read = await readZip(await res.arrayBuffer());
     manifest = JSON.parse(await read("manifest.json"));
+    if (!manifest.chapters?.length)
+      throw new Error("This book has no chapters");
     document.title = `${manifest.title} – 3NDING`;
     $("#bookTitle").textContent = manifest.title;
     $("#chapters").innerHTML = manifest.chapters
@@ -117,11 +138,16 @@ async function init() {
     const p = store.read("progress", {})[id];
     await open(p?.chapter ?? 0, p?.ratio ?? 0);
   } catch (e) {
+    book = manifest = null;
     $("#bookTitle").textContent = "Unable to open book";
     $("#page").innerHTML =
       `<p>${esc(e.message)}. <a href="index.html"><u>Back to library</u></a></p>`;
   }
 }
+const closePanel = () => {
+  $("#panel").hidden = true;
+  $("#aa").setAttribute("aria-expanded", "false");
+};
 $("#chapters").addEventListener("change", (e) => open(+e.target.value));
 $("#prev").addEventListener("click", () => open(chapter - 1));
 $("#next").addEventListener("click", () => open(chapter + 1));
@@ -129,13 +155,23 @@ $("#aa").addEventListener("click", (e) => {
   const h = ($("#panel").hidden = !$("#panel").hidden);
   e.currentTarget.setAttribute("aria-expanded", !h);
 });
-$("#fs").addEventListener("click", () =>
-  document.fullscreenElement
-    ? document.exitFullscreen()
-    : root
-        .requestFullscreen?.()
-        .catch(() => toast("Full screen is not supported")),
-);
+document.addEventListener("click", (e) => {
+  if (!$("#panel").hidden && !e.target.closest("#panel, #aa")) closePanel();
+});
+addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("#panel").hidden) {
+    closePanel();
+    $("#aa").focus();
+  }
+});
+$("#fs").addEventListener("click", () => {
+  if (document.fullscreenElement) return document.exitFullscreen();
+  if (!root.requestFullscreen)
+    return toast("Full screen is not supported here");
+  root
+    .requestFullscreen()
+    .catch(() => toast("Full screen is not supported here"));
+});
 addEventListener(
   "scroll",
   () => {
@@ -145,4 +181,7 @@ addEventListener(
   },
   { passive: true },
 );
+// Flush progress immediately when leaving so the last 300ms of scrolling isn't lost.
+addEventListener("pagehide", save);
+document.addEventListener("visibilitychange", () => document.hidden && save());
 init();

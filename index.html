@@ -12,13 +12,12 @@
     />
     <link rel="stylesheet" href="css/styles.css" />
   </head>
-  <body>
+  <body id="top">
     <header class="top">
       <div class="wrap">
         <a class="brand" href="index.html">3NDING</a>
         <nav aria-label="Main">
-          <a href="index.html" aria-current="page">Library</a
-          ><a href="favorites.html">Favorites</a>
+          <a href="index.html" aria-current="page">Library</a><a href="favorites.html">Favorites</a>
         </nav>
       </div>
     </header>
@@ -30,12 +29,7 @@
       <section>
         <h1>Library</h1>
         <div class="tools">
-          <input
-            id="q"
-            type="search"
-            placeholder="Search title or author"
-            aria-label="Search books"
-          />
+          <input id="q" type="search" placeholder="Search title or author" aria-label="Search books" />
           <select id="sort" aria-label="Sort books">
             <option value="new">Newest</option>
             <option value="old">Oldest</option>
@@ -50,6 +44,18 @@
         <nav class="pager" id="pager" aria-label="Pagination"></nav>
       </section>
     </main>
+    <footer class="foot">
+      <div class="wrap">
+        <div>
+          <a class="brand" href="index.html">3NDING</a>
+          <p>A quiet place to read. Your favorites and reading progress are saved on this device only.</p>
+        </div>
+        <nav aria-label="Footer">
+          <a href="index.html">Library</a><a href="favorites.html">Favorites</a><a href="#top">Back to top</a>
+        </nav>
+        <small>© <span id="year">2026</span> 3NDING</small>
+      </div>
+    </footer>
     <div class="toast" id="toast" role="status"></div>
     <script type="module" src="js/home.js"></script>
   </body>

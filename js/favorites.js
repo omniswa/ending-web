@@ -1,6 +1,11 @@
 import { loadBooks, card, bindCards, favs, showError } from "./app.js";
 const STEP = 12,
   $ = (s) => document.querySelector(s);
+const EMPTY = {
+  all: "You haven't saved any books yet.",
+  reading: "No books in progress.",
+  done: "No finished books yet.",
+};
 let books = [],
   filter = "all",
   shown = STEP;
@@ -18,6 +23,7 @@ function render() {
   $("#more").hidden = rest <= 0;
   $("#more").textContent = `Show more (${rest})`;
   $("#empty").hidden = list.length > 0;
+  $("#emptyMsg").textContent = EMPTY[filter];
   $("#tabs").hidden = !Object.keys(f).length;
 }
 $("#more").addEventListener("click", () => {

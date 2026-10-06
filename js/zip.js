@@ -9,6 +9,8 @@ export async function readZip(buffer) {
   if (e < 0) throw new Error("Invalid book archive");
   let p = v.getUint32(e + 16, true);
   for (let i = 0, n = v.getUint16(e + 10, true); i < n; i++) {
+    if (v.getUint32(p, true) !== 0x02014b50)
+      throw new Error("Corrupt book archive");
     const nl = v.getUint16(p + 28, true),
       xl = v.getUint16(p + 30, true),
       cl = v.getUint16(p + 32, true);
@@ -29,6 +31,9 @@ export async function readZip(buffer) {
         off + 30 + v.getUint16(off + 26, true) + v.getUint16(off + 28, true),
       data = u8.subarray(start, start + size);
     if (method === 0) return dec.decode(data);
+    if (method !== 8) throw new Error("Unsupported compression in book");
+    if (typeof DecompressionStream === "undefined")
+      throw new Error("Your browser is too old to open this book");
     return new Response(
       new Blob([data])
         .stream()

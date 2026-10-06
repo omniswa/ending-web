@@ -43,7 +43,11 @@ export const loadBooks = () =>
     })
     .then((list) =>
       list.map((b) => ({ ...b, _s: `${b.title} ${b.author}`.toLowerCase() })),
-    ));
+    )
+    .catch((e) => {
+      booksPromise = null; // allow retry after a failed load
+      throw e;
+    }));
 
 export const favs = () => store.read("favs", {});
 export function toggleFav(id) {
@@ -62,9 +66,8 @@ export function setDone(id, done) {
 export function percent(id) {
   if (favs()[id]?.done) return 100;
   const p = store.read("progress", {})[id];
-  return p
-    ? Math.min(100, Math.round(((p.chapter + p.ratio) / p.total) * 100))
-    : 0;
+  if (!p || !p.total) return 0;
+  return Math.min(100, Math.floor(((p.chapter + p.ratio) / p.total) * 100));
 }
 export function toast(msg) {
   const t = document.getElementById("toast");
@@ -74,6 +77,18 @@ export function toast(msg) {
   toast.t = setTimeout(() => t.classList.remove("on"), 2200);
 }
 
+// Cover fallback: if an image fails, show the styled placeholder instead of a broken icon.
+document.addEventListener(
+  "error",
+  (e) =>
+    e.target.matches?.(".cover img") &&
+    e.target.closest(".cover").classList.add("nocover"),
+  true,
+);
+// Footer year
+const yr = document.getElementById("year");
+if (yr) yr.textContent = new Date().getFullYear();
+
 export function card(b, { managed = false } = {}) {
   const f = favs()[b.id],
     pct = percent(b.id),
@@ -82,9 +97,9 @@ export function card(b, { managed = false } = {}) {
     pct > 0 && pct < 100 ? "Continue" : pct === 100 ? "Read again" : "Read";
   const extra = managed
     ? `<button class="icon-btn" data-act="done" aria-pressed="${!!f?.done}" aria-label="${f?.done ? "Mark as unfinished" : "Mark as finished"}" title="Finished">${icon("check")}</button><button class="icon-btn" data-act="remove" aria-label="Remove from favorites" title="Remove">${icon("trash")}</button>`
-    : `<button class="icon-btn" data-act="fav" aria-pressed="${!!f}" aria-label="${f ? "Remove from favorites" : "Add to favorites"}">${icon("heart")}</button>`;
-  return `<article class="card" data-id="${esc(b.id)}"><a class="cover" href="${href}" tabindex="-1" aria-hidden="true"><img loading="lazy" decoding="async" width="600" height="800" src="${esc(b.cover)}" alt="">${pct === 100 ? '<span class="badge">Finished</span>' : ""}</a>
-<div class="meta"><h3 class="t">${esc(b.title)}</h3><p class="a">${esc(b.author)}</p>
+    : `<button class="icon-btn" data-act="fav" aria-pressed="${!!f}" aria-label="${f ? "Remove from favorites" : "Add to favorites"}" title="Favorite">${icon("heart")}</button>`;
+  return `<article class="card" data-id="${esc(b.id)}"><a class="cover" href="${href}" tabindex="-1" aria-hidden="true"><span class="ph">${esc(b.title)}</span><img loading="lazy" decoding="async" width="600" height="800" src="${esc(b.cover)}" alt="">${pct === 100 ? '<span class="badge">Finished</span>' : ""}</a>
+<div class="meta"><h3 class="t"><a href="${href}">${esc(b.title)}</a></h3><p class="a">${esc(b.author)}</p>
 ${pct || managed ? `<div class="prog"><b><i style="width:${pct}%"></i></b>${pct}%</div>` : ""}
 <div class="acts"><a class="btn primary" href="${href}">${label}</a>${extra}<button class="icon-btn" data-act="share" aria-label="Share" title="Share">${icon("share")}</button></div></div></article>`;
 }
@@ -103,7 +118,7 @@ export function bindCards(root, books, onChange) {
       toggleFav(id);
       toast("Removed from favorites");
     } else if (act === "done") {
-      const d = !favs()[id].done;
+      const d = !favs()[id]?.done;
       setDone(id, d);
       toast(d ? "Marked as finished" : "Marked as unfinished");
     } else if (act === "share") {
@@ -122,12 +137,18 @@ export function bindCards(root, books, onChange) {
           await navigator.clipboard.writeText(url);
           toast("Link copied");
         }
-      } catch {}
+      } catch (err) {
+        if (err.name !== "AbortError") toast("Could not share this book");
+      }
       return;
     }
     onChange();
+    // Re-rendering replaces the DOM; restore keyboard focus to the same control.
+    root
+      .querySelector(`.card[data-id="${CSS.escape(id)}"] [data-act="${act}"]`)
+      ?.focus();
   });
 }
 export const showError = (el, e) => {
-  el.innerHTML = `<div class="empty"><p>${esc(e.message || "Something went wrong")}. Check your connection and reload.</p></div>`;
+  el.innerHTML = `<div class="empty"><p>${esc(e.message || "Something went wrong")}. Check your connection and try again.</p><button class="btn primary" onclick="location.reload()">Reload</button></div>`;
 };

@@ -27,13 +27,16 @@ function renderRecent() {
   const list = Object.entries(prog)
     .sort((a, b) => b[1].updated - a[1].updated)
     .map(([id]) => books.find((b) => b.id === id))
-    .filter((b) => b && percent(b.id) < 100)
+    .filter((b) => b && percent(b.id) > 0 && percent(b.id) < 100)
     .slice(0, 8);
   $("#recent").hidden = !list.length;
   $("#recentList").innerHTML = list.map((b) => card(b)).join("");
 }
 function render() {
-  view = books.filter((b) => b._s.includes(state.q)).sort(sorters[state.sort]);
+  const words = state.q.split(/\s+/).filter(Boolean); // every word must match
+  view = books
+    .filter((b) => words.every((w) => b._s.includes(w)))
+    .sort(sorters[state.sort]);
   const pages = Math.max(1, Math.ceil(view.length / PER));
   state.page = Math.min(state.page, pages);
   $("#count").textContent =
@@ -43,7 +46,7 @@ function render() {
         .slice((state.page - 1) * PER, state.page * PER)
         .map((b) => card(b))
         .join("")
-    : '<div class="empty"><p>No books match your search.</p></div>';
+    : '<div class="empty"><p>No books match your search.</p><button class="btn" id="clear">Clear search</button></div>';
   const nums = [];
   for (let i = 1; i <= pages; i++)
     if (i === 1 || i === pages || Math.abs(i - state.page) <= 1) nums.push(i);
@@ -74,12 +77,17 @@ $("#sort").addEventListener("change", (e) => {
   state.page = 1;
   render();
 });
+$("#grid").addEventListener("click", (e) => {
+  if (!e.target.closest("#clear")) return;
+  $("#q").value = state.q = "";
+  render();
+});
 $("#pager").addEventListener("click", (e) => {
   const p = e.target.closest("[data-p]");
   if (p && !p.disabled) {
     state.page = +p.dataset.p;
     render();
-    scrollTo({ top: $("h1").offsetTop - 70, behavior: "smooth" });
+    $("h1").scrollIntoView({ behavior: "smooth" });
   }
 });
 loadBooks()
