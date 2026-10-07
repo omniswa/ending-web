@@ -7,6 +7,7 @@ import {
   showError,
   skeleton,
 } from "./app.js";
+import { mountStats } from "./dashboard.js";
 const PER = 12,
   RECENT = 3,
   $ = (s) => document.querySelector(s);
@@ -32,7 +33,9 @@ function renderRecent() {
     .filter((b) => b && percent(b.id) > 0 && percent(b.id) < 100);
   const shown = state.allRecent ? list : list.slice(0, RECENT);
   $("#recent").hidden = !list.length;
-  $("#recentList").innerHTML = shown.map((b) => card(b, { row: true })).join("");
+  $("#recentList").innerHTML = shown
+    .map((b) => card(b, { row: true }))
+    .join("");
   const more = $("#recentMore");
   more.hidden = list.length <= RECENT;
   more.textContent = state.allRecent
@@ -107,7 +110,11 @@ $("#recentMore").addEventListener("click", () => {
   renderRecent();
 });
 $("#grid").innerHTML = skeleton(8);
-const refresh = () => books.length && render();
+const stats = mountStats($("main"), () => books.length && render());
+const refresh = () => {
+  stats();
+  books.length && render();
+};
 addEventListener("pageshow", (e) => e.persisted && refresh());
 addEventListener("storage", refresh);
 loadBooks()
