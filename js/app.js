@@ -114,8 +114,9 @@ export function card(b, { managed = false } = {}) {
   const done = managed
     ? `<button class="icon-btn" data-act="done" aria-pressed="${!!f?.done}" aria-label="${f?.done ? "Mark as unfinished" : "Mark as finished"}: ${t}" title="Finished">${icon("check")}</button>`
     : "";
+  const page = `book/${encodeURIComponent(b.id)}/`;
   return `<article class="card${managed ? " managed" : ""}" data-id="${esc(b.id)}"><div class="cw"><a class="cover" href="${href}" tabindex="-1" aria-hidden="true"><span class="ph">${t}</span><img loading="lazy" decoding="async" width="600" height="800" src="${esc(b.cover)}" alt="">${pct === 100 ? '<span class="badge">Finished</span>' : ""}</a><button class="icon-btn fav" data-act="fav" aria-pressed="${!!f}" aria-label="${f ? "Remove from favorites" : "Add to favorites"}: ${t}" title="Favorite">${icon("heart")}</button></div>
-<div class="meta"><h3 class="t"><a href="${href}">${t}</a></h3><p class="a">${esc(b.author)}</p>
+<div class="meta"><h3 class="t"><a href="${page}">${t}</a></h3><p class="a">${esc(b.author)}</p>
 ${pct || managed ? `<div class="prog"><b><i style="width:${pct}%"></i></b>${pct}%</div>` : ""}
 <div class="acts"><a class="btn primary" href="${href}"${pct === 100 ? ' data-act="again"' : ""}>${label}</a>${done}<button class="icon-btn" data-act="share" aria-label="Share: ${t}" title="Share">${icon("share")}</button></div></div></article>`;
 }

@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,follow" />
     <title>3NDING – Reader</title>
     <script>
       try {
         var s = JSON.parse(localStorage.getItem("3nding:reader"));
         document.documentElement.dataset.theme =
           s && /^(paper|sepia|dark|oled)$/.test(s.theme) ? s.theme : "paper";
-        document.documentElement.dataset.theme = s.theme;
       } catch (e) {}
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
