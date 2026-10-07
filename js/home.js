@@ -2,34 +2,57 @@ import {
   loadBooks,
   card,
   bindCards,
-  store,
+  obj,
+  norm,
   percent,
   showError,
   skeleton,
 } from "./app.js";
 import { mountStats } from "./dashboard.js";
-const PER = 12,
+const PER = 24,
   RECENT = 3,
   $ = (s) => document.querySelector(s);
+
+const col = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" })
+  .compare;
+const cmp = (x, y) => (x < y ? -1 : x > y ? 1 : 0);
 const sorters = {
-  new: (a, b) =>
-    b.added.localeCompare(a.added) || a.title.localeCompare(b.title),
-  old: (a, b) =>
-    a.added.localeCompare(b.added) || a.title.localeCompare(b.title),
-  ta: (a, b) => a.title.localeCompare(b.title),
-  tz: (a, b) => b.title.localeCompare(a.title),
-  aa: (a, b) => a.author.localeCompare(b.author),
-  az: (a, b) => b.author.localeCompare(a.author),
+  new: (a, b) => cmp(b.added, a.added) || col(a.title, b.title),
+  old: (a, b) => cmp(a.added, b.added) || col(a.title, b.title),
+  ta: (a, b) => col(a.title, b.title),
+  tz: (a, b) => col(b.title, a.title),
+  aa: (a, b) => col(a.author, b.author) || col(a.title, b.title),
+  az: (a, b) => col(b.author, a.author) || col(a.title, b.title),
 };
-const state = { q: "", sort: "new", page: 1, allRecent: false };
+
+const params = new URLSearchParams(location.search);
+const state = {
+  q: (params.get("q") || "").trim().slice(0, 100),
+  sort: Object.hasOwn(sorters, params.get("sort")) ? params.get("sort") : "new",
+  page: Math.max(1, parseInt(params.get("page"), 10) || 1),
+  allRecent: false,
+};
 let books = [],
+  byId = new Map(),
   view = [];
+const sorted = {};
+const sortedBooks = () =>
+  (sorted[state.sort] ??= [...books].sort(sorters[state.sort]));
+
+function syncUrl() {
+  const p = new URLSearchParams();
+  if (state.q) p.set("q", state.q);
+  if (state.sort !== "new") p.set("sort", state.sort);
+  if (state.page > 1) p.set("page", state.page);
+  const s = p.toString();
+  history.replaceState(null, "", location.pathname + (s ? "?" + s : "") + location.hash);
+}
 
 function renderRecent() {
-  const prog = store.read("progress", {});
+  const prog = obj("progress");
   const list = Object.entries(prog)
-    .sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0))
-    .map(([id]) => books.find((b) => b.id === id))
+    .sort((a, b) => (b[1]?.updated || 0) - (a[1]?.updated || 0))
+    .map(([id]) => byId.get(id))
     .filter((b) => b && percent(b.id) > 0 && percent(b.id) < 100);
   const shown = state.allRecent ? list : list.slice(0, RECENT);
   $("#recent").hidden = !list.length;
@@ -44,12 +67,11 @@ function renderRecent() {
   more.setAttribute("aria-expanded", String(state.allRecent));
 }
 function render() {
-  const words = state.q.split(/\s+/).filter(Boolean);
-  view = books
-    .filter((b) => words.every((w) => b._s.includes(w)))
-    .sort(sorters[state.sort]);
+  const words = norm(state.q).split(/\s+/).filter(Boolean);
+  view = sortedBooks().filter((b) => words.every((w) => b._s.includes(w)));
   const pages = Math.max(1, Math.ceil(view.length / PER));
   state.page = Math.min(state.page, pages);
+  syncUrl();
   $("#count").textContent =
     `${view.length.toLocaleString()} ${view.length === 1 ? "book" : "books"}`;
   $("#grid").innerHTML = view.length
@@ -75,10 +97,12 @@ function render() {
       : "";
   renderRecent();
 }
+$("#q").value = state.q;
+$("#sort").value = state.sort;
 $("#q").addEventListener("input", (e) => {
   clearTimeout(render.t);
   render.t = setTimeout(() => {
-    state.q = e.target.value.trim().toLowerCase();
+    state.q = e.target.value.trim().slice(0, 100);
     state.page = 1;
     render();
   }, 200);
@@ -98,7 +122,10 @@ $("#pager").addEventListener("click", (e) => {
   if (p && !p.disabled) {
     state.page = +p.dataset.p;
     render();
-    $("h1").scrollIntoView({
+    const h = $("h1");
+    h.tabIndex = -1;
+    h.focus({ preventScroll: true });
+    h.scrollIntoView({
       behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
         ? "auto"
         : "smooth",
@@ -120,6 +147,7 @@ addEventListener("storage", refresh);
 loadBooks()
   .then((b) => {
     books = b;
+    byId = new Map(b.map((x) => [x.id, x]));
     bindCards($("#grid"), books, render);
     bindCards($("#recentList"), books, render);
     render();

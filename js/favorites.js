@@ -3,6 +3,7 @@ import {
   card,
   bindCards,
   favs,
+  percent,
   showError,
   skeleton,
 } from "./app.js";
@@ -16,12 +17,17 @@ const EMPTY = {
 let books = [],
   filter = "all",
   shown = STEP;
+const match = (b, f) => {
+  if (filter === "all") return true;
+  if (filter === "done") return !!f[b.id].done;
+  return !f[b.id].done && percent(b.id) > 0;
+};
 function render() {
   const f = favs();
   const list = books
     .filter((b) => f[b.id])
-    .sort((a, b) => f[b.id].at - f[a.id].at)
-    .filter((b) => filter === "all" || (filter === "done") === !!f[b.id].done);
+    .sort((a, b) => (f[b.id].at || 0) - (f[a.id].at || 0))
+    .filter((b) => match(b, f));
   $("#grid").innerHTML = list
     .slice(0, shown)
     .map((b) => card(b, { managed: true }))

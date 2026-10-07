@@ -56,13 +56,15 @@
       aria-label="Reading settings"
     ></section>
     <main>
-      <article class="page" id="page" aria-live="polite"></article>
+      <!-- No aria-live here: it would make screen readers read whole chapters aloud. -->
+      <article class="page" id="page"></article>
       <div class="wrap chnav">
         <button class="btn" id="prev" disabled>Previous</button
         ><button class="btn primary" id="next" disabled>Next</button>
       </div>
     </main>
     <div class="toast" id="toast" role="status"></div>
+    <noscript><p style="padding:1rem">Reading requires JavaScript.</p></noscript>
     <script type="module" src="js/reader.js"></script>
   </body>
 </html>

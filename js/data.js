@@ -1,4 +1,4 @@
-import { store } from "./app.js";
+import { store, obj } from "./app.js";
 import { GOALS, dayKey } from "./stats.js";
 const KEYS = ["favs", "progress", "reader", "days", "goal", "highlights"];
 const isObj = (v) => v && typeof v === "object" && !Array.isArray(v);
@@ -7,6 +7,9 @@ const okKey = (k) =>
   k.length <= 200 &&
   !["__proto__", "constructor", "prototype"].includes(k);
 const str = (v, n) => String(v ?? "").slice(0, n);
+const save = (k, v) => {
+  if (!store.write(k, v)) throw new Error("Not enough storage space to import");
+};
 
 export function exportData() {
   const data = {};
@@ -46,7 +49,7 @@ export function importData(text) {
     n = { favs: 0, progress: 0, days: 0, highlights: 0 };
 
   if (isObj(d.favs)) {
-    const f = store.read("favs", {});
+    const f = obj("favs");
     for (const [id, v] of Object.entries(d.favs)) {
       if (!okKey(id) || !isObj(v)) continue;
       f[id] = {
@@ -55,10 +58,10 @@ export function importData(text) {
       };
       n.favs++;
     }
-    store.write("favs", f);
+    save("favs", f);
   }
   if (isObj(d.progress)) {
-    const p = store.read("progress", {});
+    const p = obj("progress");
     for (const [id, v] of Object.entries(d.progress)) {
       if (!okKey(id) || !isObj(v)) continue;
       const chapter = Math.floor(+v.chapter),
@@ -69,6 +72,7 @@ export function importData(text) {
         !(
           chapter >= 0 &&
           total >= 1 &&
+          chapter < total &&
           ratio >= 0 &&
           ratio <= 1 &&
           Number.isFinite(updated)
@@ -80,26 +84,30 @@ export function importData(text) {
         n.progress++;
       }
     }
-    store.write("progress", p);
+    save("progress", p);
   }
   if (isObj(d.days)) {
-    const cur = store.read("days", {});
+    const cur = obj("days");
     for (const [k, s] of Object.entries(d.days)) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !(+s >= 0 && +s <= 86400)) continue;
       cur[k] = Math.max(cur[k] || 0, +s);
       n.days++;
     }
-    store.write("days", cur);
+    save("days", cur);
   }
-  if (GOALS.includes(+d.goal)) store.write("goal", +d.goal);
-  if (isObj(d.reader)) store.write("reader", d.reader); 
+  if (GOALS.includes(+d.goal)) save("goal", +d.goal);
+  if (isObj(d.reader)) save("reader", d.reader);
   if (Array.isArray(d.highlights)) {
-    const all = store.read("highlights", []);
+    const raw = store.read("highlights", []);
+    const all = Array.isArray(raw) ? raw : [];
     const has = (h) =>
       all.some(
         (x) =>
           x.id === h.id ||
-          (x.book === h.book && x.chapter === h.chapter && x.text === h.text),
+          (x.book === h.book &&
+            x.chapter === h.chapter &&
+            x.text === h.text &&
+            (x.pi ?? h.pi) === (h.pi ?? x.pi)),
       );
     for (const h of d.highlights) {
       if (
@@ -110,7 +118,8 @@ export function importData(text) {
       )
         continue;
       const text = h.text.replace(/\s+/g, " ").trim().slice(0, 300),
-        chapter = Math.floor(+h.chapter);
+        chapter = Math.floor(+h.chapter),
+        pi = Math.floor(+h.pi);
       if (text.length < 3 || !(chapter >= 0)) continue;
       const item = {
         id: h.id,
@@ -122,12 +131,13 @@ export function importData(text) {
         ch: str(h.ch, 200),
         at: Number.isFinite(+h.at) ? +h.at : Date.now(),
       };
+      if (pi >= 0) item.pi = pi;
       if (!has(item)) {
         all.push(item);
         n.highlights++;
       }
     }
-    store.write("highlights", all.slice(-500));
+    save("highlights", all.slice(-500));
   }
   return `${n.progress} book progress, ${n.favs} favorites, ${n.highlights} highlights, ${n.days} days`;
 }

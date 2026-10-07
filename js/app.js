@@ -5,7 +5,8 @@ const ICONS = {
     '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/>',
   share:
     '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
-  check: '<path d="M20 6 9 17l-5-5"/>',
+  check:
+    '<circle cx="12" cy="12" r="10"/><path d="m7.5 12 3 3 6-6" fill="none" stroke="white" stroke-width="2"/>',
   back: '<path d="M19 12H5m7-7-7 7 7 7"/>',
   full: '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>',
 };
@@ -19,6 +20,13 @@ export const esc = (s) =>
       ],
   );
 
+export const norm = (s) =>
+  String(s)
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+
+let warned = false;
 export const store = {
   read(k, d) {
     try {
@@ -30,12 +38,24 @@ export const store = {
   write(k, v) {
     try {
       localStorage.setItem("3nding:" + k, JSON.stringify(v));
-    } catch {}
+      return true;
+    } catch {
+      if (!warned) {
+        warned = true;
+        toast("Could not save – browser storage is full or blocked");
+      }
+      return false;
+    }
   },
 };
+export const obj = (k) => {
+  const v = store.read(k, {});
+  return v && typeof v === "object" && !Array.isArray(v) ? v : {};
+};
+
 let booksPromise;
 export const loadBooks = () =>
-  (booksPromise ??= fetch("books.json")
+  (booksPromise ??= fetch("books.json", { cache: "no-cache" })
     .then((r) => {
       if (!r.ok) throw new Error("Could not load the library");
       return r.json();
@@ -61,7 +81,8 @@ export const loadBooks = () =>
             author,
             added: String(b.added ?? ""),
             cover: b.cover ? String(b.cover) : "",
-            _s: `${title} ${author}`.toLowerCase(),
+            zip: b.zip ? String(b.zip) : `books/${b.id}.zip`,
+            _s: norm(`${title} ${author}`),
           };
         });
     })
@@ -70,7 +91,7 @@ export const loadBooks = () =>
       throw e;
     }));
 
-export const favs = () => store.read("favs", {});
+export const favs = () => obj("favs");
 export function toggleFav(id) {
   const f = favs();
   f[id] ? delete f[id] : (f[id] = { at: Date.now(), done: false });
@@ -85,7 +106,7 @@ export function setDone(id, done) {
   }
 }
 export function resetProgress(id) {
-  const p = store.read("progress", {});
+  const p = obj("progress");
   if (p[id]) {
     delete p[id];
     store.write("progress", p);
@@ -93,7 +114,7 @@ export function resetProgress(id) {
 }
 export function percent(id) {
   if (favs()[id]?.done) return 100;
-  const p = store.read("progress", {})[id];
+  const p = obj("progress")[id];
   if (!p || !p.total) return 0;
   return Math.min(99, Math.floor(((p.chapter + p.ratio) / p.total) * 100));
 }
@@ -173,6 +194,7 @@ export function bindCards(root, books, onChange) {
       resetProgress(id);
       return;
     } else if (act === "share") {
+      if (!b) return;
       const url = new URL(
         `reader.html?id=${encodeURIComponent(id)}`,
         location.href,

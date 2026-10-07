@@ -1,4 +1,4 @@
-import { loadBooks, store, favs, icon, esc, toast } from "./app.js";
+import { loadBooks, store, obj, favs, icon, esc, toast } from "./app.js";
 import { readZip } from "./zip.js";
 import { addTime } from "./stats.js";
 import { shareCard } from "./quote.js";
@@ -71,6 +71,7 @@ const highlights = () => {
   const h = store.read("highlights", []);
   return Array.isArray(h) ? h : [];
 };
+const forPara = (hs, i) => hs.filter((h) => h.pi == null || h.pi === i);
 function markup(s, hs) {
   const r = [];
   for (const h of hs) {
@@ -148,7 +149,7 @@ const ratio = () => {
 };
 function save() {
   if (!book || !manifest || !ready) return;
-  const p = store.read("progress", {});
+  const p = obj("progress");
   p[book.id] = {
     chapter,
     ratio: ratio(),
@@ -179,7 +180,7 @@ function ttsStop() {
     .forEach((x) => x.classList.remove("speaking"));
   $("#tts")?.setAttribute("aria-pressed", "false");
 }
-const ttsNodes = () => [...document.querySelectorAll("#page h2, #page p")];
+const ttsNodes = () => [...document.querySelectorAll("#page > h2, #page > p")];
 function speakFrom(i) {
   if (!tts.on) return;
   document
@@ -244,7 +245,7 @@ async function open(i, r = 0, keepTts = false) {
         .split(/\r?\n\s*\r?\n/)
         .map((s) => s.replace(/\s+/g, " ").trim())
         .filter(Boolean)
-        .map((s) => `<p>${markup(s, hs)}</p>`)
+        .map((s, idx) => `<p>${markup(s, forPara(hs, idx))}</p>`)
         .join("");
   } catch (e) {
     if (my !== token) return;
@@ -287,14 +288,17 @@ async function init() {
     if (!res.ok) throw new Error("Could not download this book");
     read = await readZip(await res.arrayBuffer());
     manifest = JSON.parse(await read("manifest.json"));
-    if (!manifest.chapters?.length)
+    if (!Array.isArray(manifest.chapters) || !manifest.chapters.length)
       throw new Error("This book has no chapters");
+    manifest.title = String(manifest.title || book.title);
+    if (/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(manifest.lang || ""))
+      root.lang = manifest.lang;
     document.title = `${manifest.title} – 3NDING`;
     $("#bookTitle").textContent = manifest.title;
     $("#chapters").innerHTML = manifest.chapters
       .map((c, i) => `<option value="${i}">${i + 1}. ${esc(c.title)}</option>`)
       .join("");
-    const p = store.read("progress", {})[id];
+    const p = obj("progress")[id];
     await open(p?.chapter ?? 0, p?.ratio ?? 0);
   } catch (e) {
     book = manifest = null;
@@ -331,9 +335,14 @@ $("#hlbar").addEventListener("pointerdown", (e) => e.preventDefault());
 function saveHighlight() {
   if (!pending || !book || !manifest) return null;
   const { text, p } = pending,
-    all = highlights();
+    all = highlights(),
+    pi = [...document.querySelectorAll("#page > p")].indexOf(p);
   let h = all.find(
-    (x) => x.book === book.id && x.chapter === chapter && x.text === text,
+    (x) =>
+      x.book === book.id &&
+      x.chapter === chapter &&
+      x.text === text &&
+      (x.pi ?? pi) === pi,
   );
   if (!h) {
     h = {
@@ -346,12 +355,16 @@ function saveHighlight() {
       text,
       at: Date.now(),
     };
+    if (pi >= 0) h.pi = pi;
     all.push(h);
     store.write("highlights", all.slice(-500));
     if (p.isConnected)
       p.innerHTML = markup(
         p.textContent,
-        all.filter((x) => x.book === book.id && x.chapter === chapter),
+        forPara(
+          all.filter((x) => x.book === book.id && x.chapter === chapter),
+          pi,
+        ),
       );
     toast("Highlight saved");
   }
