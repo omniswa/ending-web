@@ -5,6 +5,7 @@ import {
   store,
   percent,
   showError,
+  skeleton,
 } from "./app.js";
 const PER = 12,
   $ = (s) => document.querySelector(s);
@@ -33,7 +34,7 @@ function renderRecent() {
   $("#recentList").innerHTML = list.map((b) => card(b)).join("");
 }
 function render() {
-  const words = state.q.split(/\s+/).filter(Boolean); // every word must match
+  const words = state.q.split(/\s+/).filter(Boolean);
   view = books
     .filter((b) => words.every((w) => b._s.includes(w)))
     .sort(sorters[state.sort]);
@@ -90,6 +91,10 @@ $("#pager").addEventListener("click", (e) => {
     $("h1").scrollIntoView({ behavior: "smooth" });
   }
 });
+$("#grid").innerHTML = skeleton(8);
+const refresh = () => books.length && render();
+addEventListener("pageshow", (e) => e.persisted && refresh());
+addEventListener("storage", refresh);
 loadBooks()
   .then((b) => {
     books = b;

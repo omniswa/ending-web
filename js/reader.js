@@ -1,4 +1,4 @@
-import { loadBooks, store, icon, esc, toast } from "./app.js";
+import { loadBooks, store, favs, icon, esc, toast } from "./app.js";
 import { readZip } from "./zip.js";
 const $ = (s) => document.querySelector(s),
   root = document.documentElement;
@@ -13,7 +13,10 @@ const OPTS = {
   theme: ["paper", "sepia", "dark", "oled"],
   align: ["left", "justify"],
 };
-// Validate stored settings so corrupt/old values can't break the page.
+const SKELETON =
+  '<div class="skl" aria-hidden="true">' + "<i></i>".repeat(10) + "</div>";
+const failView = (msg, extra = "") =>
+  `<div class="empty"><p>${esc(msg)}.</p><button class="btn primary" data-retry>Try again</button>${extra}</div>`;
 function clean(s) {
   const o = { ...DEFAULTS };
   for (const k in OPTS) if (OPTS[k].includes(s?.[k])) o[k] = s[k];
@@ -27,7 +30,8 @@ let settings = clean(store.read("reader", {})),
   read,
   chapter = 0,
   saveTimer,
-  token = 0;
+  token = 0,
+  ready = false;
 
 function apply() {
   root.dataset.theme = settings.theme;
@@ -72,7 +76,7 @@ const ratio = () => {
   return m > 0 ? Math.min(1, scrollY / m) : 0;
 };
 function save() {
-  if (!book || !manifest) return;
+  if (!book || !manifest || !ready) return;
   const p = store.read("progress", {});
   p[book.id] = {
     chapter,
@@ -84,12 +88,23 @@ function save() {
   $("#bar").style.width =
     ((chapter + ratio()) / manifest.chapters.length) * 100 + "%";
 }
+const isLast = () => chapter === manifest.chapters.length - 1;
+function updateNext() {
+  const n = $("#next");
+  n.disabled = false;
+  n.textContent = !isLast()
+    ? "Next"
+    : favs()[book.id]?.done
+      ? "Back to library"
+      : "Mark as finished";
+}
 async function open(i, r = 0) {
-  const my = ++token; // ignore stale loads when the reader clicks quickly
+  const my = ++token; 
+  ready = false;
   chapter = Math.max(0, Math.min(i, manifest.chapters.length - 1));
   const c = manifest.chapters[chapter];
   $("#page").setAttribute("aria-busy", "true");
-  $("#page").innerHTML = '<p class="muted">Loading…</p>';
+  $("#page").innerHTML = SKELETON;
   let ok = true;
   try {
     const text = await read(c.file);
@@ -104,22 +119,28 @@ async function open(i, r = 0) {
   } catch (e) {
     if (my !== token) return;
     ok = false;
-    $("#page").innerHTML = `<p>${esc(e.message)}</p>`;
+    $("#page").innerHTML = failView(e.message || "Could not load this chapter");
   }
   $("#page").removeAttribute("aria-busy");
   $("#chapters").value = chapter;
   $("#prev").disabled = chapter === 0;
-  $("#next").disabled = chapter === manifest.chapters.length - 1;
+  updateNext();
   requestAnimationFrame(() => {
+    if (my !== token) return;
     scrollTo(0, r * (root.scrollHeight - innerHeight));
+    ready = ok;
     if (ok) save();
   });
 }
 async function init() {
+  history.scrollRestoration = "manual";
   $("#back").innerHTML = icon("back");
   $("#fs").innerHTML = icon("full");
+  if (!document.fullscreenEnabled) $("#fs").hidden = true;
   buildPanel();
   apply();
+  $("#page").setAttribute("aria-busy", "true");
+  $("#page").innerHTML = SKELETON;
   try {
     const id = new URLSearchParams(location.search).get("id");
     book = (await loadBooks()).find((b) => b.id === id);
@@ -139,18 +160,34 @@ async function init() {
     await open(p?.chapter ?? 0, p?.ratio ?? 0);
   } catch (e) {
     book = manifest = null;
+    $("#page").removeAttribute("aria-busy");
     $("#bookTitle").textContent = "Unable to open book";
-    $("#page").innerHTML =
-      `<p>${esc(e.message)}. <a href="index.html"><u>Back to library</u></a></p>`;
+    $("#page").innerHTML = failView(
+      e.message || "Something went wrong",
+      '<a class="btn" href="index.html">Back to library</a>',
+    );
   }
 }
 const closePanel = () => {
   $("#panel").hidden = true;
   $("#aa").setAttribute("aria-expanded", "false");
 };
+$("#page").addEventListener("click", (e) => {
+  if (!e.target.closest("[data-retry]")) return;
+  if (book && manifest) open(chapter);
+  else init();
+});
 $("#chapters").addEventListener("change", (e) => open(+e.target.value));
 $("#prev").addEventListener("click", () => open(chapter - 1));
-$("#next").addEventListener("click", () => open(chapter + 1));
+$("#next").addEventListener("click", () => {
+  if (!isLast()) return open(chapter + 1);
+  if (favs()[book.id]?.done) return (location.href = "index.html");
+  const f = favs();
+  f[book.id] = { at: f[book.id]?.at ?? Date.now(), done: true };
+  store.write("favs", f);
+  toast("Marked as finished");
+  updateNext();
+});
 $("#aa").addEventListener("click", (e) => {
   const h = ($("#panel").hidden = !$("#panel").hidden);
   e.currentTarget.setAttribute("aria-expanded", !h);
@@ -181,7 +218,6 @@ addEventListener(
   },
   { passive: true },
 );
-// Flush progress immediately when leaving so the last 300ms of scrolling isn't lost.
 addEventListener("pagehide", save);
 document.addEventListener("visibilitychange", () => document.hidden && save());
 init();

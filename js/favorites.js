@@ -1,4 +1,11 @@
-import { loadBooks, card, bindCards, favs, showError } from "./app.js";
+import {
+  loadBooks,
+  card,
+  bindCards,
+  favs,
+  showError,
+  skeleton,
+} from "./app.js";
 const STEP = 12,
   $ = (s) => document.querySelector(s);
 const EMPTY = {
@@ -24,7 +31,15 @@ function render() {
   $("#more").textContent = `Show more (${rest})`;
   $("#empty").hidden = list.length > 0;
   $("#emptyMsg").textContent = EMPTY[filter];
-  $("#tabs").hidden = !Object.keys(f).length;
+  const has = Object.keys(f).length;
+  $("#tabs").hidden = !has;
+  if (!has && filter !== "all") {
+    filter = "all";
+    document
+      .querySelectorAll("#tabs button")
+      .forEach((x) => x.setAttribute("aria-pressed", x.dataset.f === "all"));
+    render();
+  }
 }
 $("#more").addEventListener("click", () => {
   shown += STEP;
@@ -40,6 +55,10 @@ $("#tabs").addEventListener("click", (e) => {
     .forEach((x) => x.setAttribute("aria-pressed", x === b));
   render();
 });
+$("#grid").innerHTML = skeleton(6);
+const refresh = () => books.length && render();
+addEventListener("pageshow", (e) => e.persisted && refresh());
+addEventListener("storage", refresh);
 loadBooks()
   .then((b) => {
     books = b;

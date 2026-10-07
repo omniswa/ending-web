@@ -297,7 +297,6 @@ nav a[aria-current] {
   background: var(--accent);
   border-radius: 9px;
 }
-/* Primary action gets its own full-width row; icon buttons share the row below. */
 .acts {
   display: flex;
   flex-wrap: wrap;
@@ -369,7 +368,7 @@ nav a[aria-current] {
   justify-content: center;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin: 2.5rem 0;
+  margin: 1rem 0;
 }
 .pager .btn {
   min-width: 40px;
@@ -401,7 +400,7 @@ nav a[aria-current] {
 .more {
   display: flex;
   justify-content: center;
-  margin: 2.5rem 0;
+  margin: 1rem 0;
 }
 .empty {
   grid-column: 1/-1;
@@ -533,7 +532,7 @@ nav a[aria-current] {
   max-width: 70ch;
   display: flex;
   gap: 0.6rem;
-  padding-bottom: 4rem;
+  padding-bottom: 2.5rem;
 }
 .chnav .btn {
   flex: 1;
@@ -623,4 +622,87 @@ nav a[aria-current] {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+[hidden] {
+  display: none !important;
+}
+.cw {
+  position: relative;
+}
+.cw .fav {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  width: 34px;
+  height: 34px;
+  border-radius: 99px;
+  border-color: transparent;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(6px);
+}
+.acts .primary {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.acts .icon-btn {
+  flex: none;
+  width: 40px;
+  min-width: 0;
+}
+.card.managed .acts .primary {
+  flex-basis: 100%;
+}
+.card.managed .acts .icon-btn {
+  flex: 1 1 0;
+  width: auto;
+}
+.sk .cover {
+  box-shadow: none;
+}
+.sk i,
+.skl i {
+  display: block;
+  height: 0.8rem;
+  margin-top: 0.6rem;
+  border-radius: 6px;
+  background: var(--line);
+}
+.sk i:last-child {
+  width: 60%;
+}
+.skl i {
+  height: 1rem;
+  margin-top: 1rem;
+}
+.skl i:nth-child(4n) {
+  width: 70%;
+  margin-bottom: 1.4rem;
+}
+.sk .cover,
+.sk i,
+.skl i {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk .cover,
+  .sk i,
+  .skl i {
+    animation: none;
+  }
+}
+
+.page {
+  overflow-wrap: break-word;
+}
+.page .empty {
+  padding: 3rem 0;
+}
+.toast {
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
 }

@@ -5,8 +5,12 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>3NDING – Reader</title>
     <script>
-      /* Apply saved theme before first paint to avoid a light flash. */
-      try{var s=JSON.parse(localStorage.getItem("3nding:reader"));if(s&&/^(paper|sepia|dark|oled)$/.test(s.theme))document.documentElement.dataset.theme=s.theme;}catch(e){}
+      try {
+        var s = JSON.parse(localStorage.getItem("3nding:reader"));
+        document.documentElement.dataset.theme =
+          s && /^(paper|sepia|dark|oled)$/.test(s.theme) ? s.theme : "paper";
+        document.documentElement.dataset.theme = s.theme;
+      } catch (e) {}
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -19,19 +23,43 @@
   <body>
     <header class="top">
       <div class="wrap bar">
-        <a class="icon-btn" href="index.html" aria-label="Back to library" id="back"></a>
+        <a
+          class="icon-btn"
+          href="index.html"
+          aria-label="Back to library"
+          id="back"
+        ></a>
         <div class="bt">
-          <strong id="bookTitle">Loading…</strong><select id="chapters" aria-label="Chapter"></select>
+          <strong id="bookTitle">Loading…</strong
+          ><select id="chapters" aria-label="Chapter"></select>
         </div>
-        <button class="icon-btn" id="fs" aria-label="Toggle full screen"></button><button class="icon-btn" id="aa" aria-label="Reading settings" aria-expanded="false">Aa</button>
+        <button
+          class="icon-btn"
+          id="fs"
+          aria-label="Toggle full screen"
+        ></button
+        ><button
+          class="icon-btn"
+          id="aa"
+          aria-label="Reading settings"
+          aria-expanded="false"
+        >
+          Aa
+        </button>
       </div>
       <div class="bar-progress"><i id="bar"></i></div>
     </header>
-    <section class="panel" id="panel" hidden aria-label="Reading settings"></section>
+    <section
+      class="panel"
+      id="panel"
+      hidden
+      aria-label="Reading settings"
+    ></section>
     <main>
       <article class="page" id="page" aria-live="polite"></article>
       <div class="wrap chnav">
-        <button class="btn" id="prev" disabled>Previous</button><button class="btn primary" id="next" disabled>Next</button>
+        <button class="btn" id="prev" disabled>Previous</button
+        ><button class="btn primary" id="next" disabled>Next</button>
       </div>
     </main>
     <div class="toast" id="toast" role="status"></div>
