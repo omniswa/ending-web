@@ -121,7 +121,7 @@ h2 {
 }
 h1 {
   font-size: clamp(1.9rem, 5vw, 2.8rem);
-  margin: 2rem 0 1rem;
+  margin: 1rem 0 1rem;
   scroll-margin-top: 70px;
 }
 h2 {
@@ -207,6 +207,7 @@ nav a[aria-current] {
   min-width: 0;
 }
 .cover {
+  display: block;
   position: relative;
   aspect-ratio: 3/4;
   border-radius: 6px 12px 12px 6px;
@@ -216,6 +217,7 @@ nav a[aria-current] {
     var(--shadow),
     inset 5px 0 8px -4px #0005;
   transition: transform 0.2s;
+  white-space: pre-wrap;
 }
 .cover:hover {
   transform: translateY(-4px);
@@ -238,6 +240,9 @@ nav a[aria-current] {
   color: var(--muted);
 }
 .cover.nocover img {
+  display: none;
+}
+.cover.loaded .ph {
   display: none;
 }
 .badge {
@@ -351,17 +356,6 @@ nav a[aria-current] {
 }
 .icon-btn[aria-pressed="true"] .ico {
   fill: currentColor;
-}
-.rail {
-  display: flex;
-  gap: 1.1rem;
-  overflow-x: auto;
-  padding: 0.3rem 0.2rem 1rem;
-  scroll-snap-type: x proximity;
-}
-.rail .card {
-  flex: 0 0 150px;
-  scroll-snap-align: start;
 }
 .pager {
   display: flex;
@@ -630,6 +624,27 @@ nav a[aria-current] {
 .cw {
   position: relative;
 }
+.cw .prog {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 1.6rem 0.6rem 0.5rem;
+  gap: 0.4rem;
+  border-radius: 0 0 12px 6px;
+  background: linear-gradient(to top, #000c, #0000);
+  color: #fff;
+  font-weight: 600;
+  pointer-events: none;
+}
+.cw .prog b {
+  background: #fff5;
+  height: 4px;
+}
+.cw .prog i {
+  background: #fff;
+}
 .cw .fav {
   position: absolute;
   top: 0.45rem;
@@ -705,4 +720,52 @@ nav a[aria-current] {
 }
 .toast {
   bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+.recent-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+}
+@media (min-width: 700px) {
+  .recent-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1000px) {
+  .recent-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.card.row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+  padding: 0.7rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.card.row .cover:hover {
+  transform: none;
+}
+.card.row .meta {
+  padding: 0;
+  height: 100%;
+}
+.card.row .t {
+  font-size: 1rem;
+}
+.card.row .acts {
+  padding-top: 0.5rem;
+}
+.card.row .cw .fav {
+  width: 28px;
+  height: 28px;
+  top: 0.3rem;
+  right: 0.3rem;
+}
+.card.row .cw .fav .ico {
+  width: 0.95em;
+  height: 0.95em;
 }

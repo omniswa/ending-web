@@ -3,6 +3,7 @@ const EOCD = 0x06054b50,
   LOCAL = 0x04034b50,
   UTF8_FLAG = 1 << 11,
   DATA_DESCRIPTOR_FLAG = 1 << 3,
+  CORRUPT = "Corrupt book archive",
   CP437 =
     "ÇüéâäàåçêëèïîìÄÅ" +
     "ÉæÆôöòûùÿÖÜ¢£¥₧ƒ" +
@@ -11,7 +12,7 @@ const EOCD = 0x06054b50,
     "└┴┬├─┼╞╟╚╔╩╦╠═╬╧" +
     "╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀" +
     "αßΓπΣσµτΦΘΩδ∞φε∩" +
-    "≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ";
+    "≡±≥≤⌠⌡÷≈°∙·√ⁿ²■ ";
 
 const crcTable = new Uint32Array(256);
 for (let i = 0; i < crcTable.length; i++) {
@@ -40,7 +41,13 @@ function crc32(bytes) {
 }
 
 function decodeName(bytes, flags, utf8) {
-  if (flags & UTF8_FLAG) return utf8.decode(bytes);
+  if (flags & UTF8_FLAG) {
+    try {
+      return utf8.decode(bytes);
+    } catch {
+      throw new Error(CORRUPT);
+    }
+  }
   let name = "";
   for (const byte of bytes)
     name += byte < 128 ? String.fromCharCode(byte) : CP437[byte - 128];
@@ -50,30 +57,34 @@ function decodeName(bytes, flags, utf8) {
 async function inflate(data, expectedSize) {
   if (typeof DecompressionStream === "undefined")
     throw new Error("Your browser is too old to open this book");
-  const reader = new Blob([data])
-    .stream()
-    .pipeThrough(new DecompressionStream("deflate-raw"))
-    .getReader();
-  const chunks = [];
-  let size = 0;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    size += value.length;
-    if (size > expectedSize) {
-      await reader.cancel();
-      throw new Error("Corrupt book archive");
+  try {
+    const reader = new Blob([data])
+      .stream()
+      .pipeThrough(new DecompressionStream("deflate-raw"))
+      .getReader();
+    const chunks = [];
+    let size = 0;
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.length;
+      if (size > expectedSize) {
+        await reader.cancel();
+        throw new Error(CORRUPT);
+      }
+      chunks.push(value);
     }
-    chunks.push(value);
+    if (size !== expectedSize) throw new Error(CORRUPT);
+    const output = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      output.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return output;
+  } catch (e) {
+    throw e.message === CORRUPT ? e : new Error(CORRUPT);
   }
-  if (size !== expectedSize) throw new Error("Corrupt book archive");
-  const output = new Uint8Array(size);
-  let offset = 0;
-  for (const chunk of chunks) {
-    output.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return output;
 }
 
 export async function readZip(buffer) {
@@ -116,14 +127,13 @@ export async function readZip(buffer) {
     !inRange(centralOffset, centralSize, e) ||
     centralOffset + centralSize > e
   )
-    throw new Error("Corrupt book archive");
+    throw new Error(CORRUPT);
 
   let p = centralOffset;
   for (let i = 0; i < entryCount; i++) {
     if (!inRange(p, 46, centralOffset + centralSize))
-      throw new Error("Corrupt book archive");
-    if (v.getUint32(p, true) !== CENTRAL)
-      throw new Error("Corrupt book archive");
+      throw new Error(CORRUPT);
+    if (v.getUint32(p, true) !== CENTRAL) throw new Error(CORRUPT);
     const flags = v.getUint16(p + 8, true),
       method = v.getUint16(p + 10, true),
       crc = v.getUint32(p + 16, true),
@@ -136,7 +146,7 @@ export async function readZip(buffer) {
       off = v.getUint32(p + 42, true),
       recordLength = 46 + nl + xl + cl;
     if (!inRange(p, recordLength, centralOffset + centralSize))
-      throw new Error("Corrupt book archive");
+      throw new Error(CORRUPT);
     if (startDisk) throw new Error("Multi-disk book archives are not supported");
     if (compressedSize === 0xffffffff || size === 0xffffffff || off === 0xffffffff)
       throw new Error("ZIP64 book archives are not supported");
@@ -169,7 +179,7 @@ export async function readZip(buffer) {
     if (method !== 0 && method !== 8)
       throw new Error("Unsupported compression in book");
     if (!inRange(off, 30, centralOffset) || v.getUint32(off, true) !== LOCAL)
-      throw new Error("Corrupt book archive");
+      throw new Error(CORRUPT);
     const localFlags = v.getUint16(off + 6, true),
       localMethod = v.getUint16(off + 8, true),
       localCrc = v.getUint32(off + 14, true),
@@ -185,25 +195,25 @@ export async function readZip(buffer) {
       nl !== entryName.length ||
       !u8.subarray(off + 30, off + 30 + nl).every((byte, i) => byte === entryName[i])
     )
-      throw new Error("Corrupt book archive");
+      throw new Error(CORRUPT);
     if (
       !(flags & DATA_DESCRIPTOR_FLAG) &&
       (localCrc !== crc ||
         localCompressedSize !== compressedSize ||
         localSize !== size)
     )
-      throw new Error("Corrupt book archive");
+      throw new Error(CORRUPT);
     if (!inRange(dataStart, compressedSize, centralOffset))
-      throw new Error("Corrupt book archive");
+      throw new Error(CORRUPT);
     const compressed = u8.subarray(dataStart, dataStart + compressedSize);
     let data;
     if (method === 0) {
-      if (compressedSize !== size) throw new Error("Corrupt book archive");
+      if (compressedSize !== size) throw new Error(CORRUPT);
       data = compressed;
     } else {
       data = await inflate(compressed, size);
     }
-    if (crc32(data) !== crc) throw new Error("Corrupt book archive");
+    if (crc32(data) !== crc) throw new Error(CORRUPT);
     return text.decode(data);
   };
 }

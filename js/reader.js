@@ -31,7 +31,8 @@ let settings = clean(store.read("reader", {})),
   chapter = 0,
   saveTimer,
   token = 0,
-  ready = false;
+  ready = false,
+  panelBuilt = false;
 
 function apply() {
   root.dataset.theme = settings.theme;
@@ -50,6 +51,8 @@ function apply() {
   store.write("reader", settings);
 }
 function buildPanel() {
+  if (panelBuilt) return;
+  panelBuilt = true;
   const seg = (k) =>
     `<div class="seg">${OPTS[k].map((v) => `<button data-k="${k}" data-v="${v}">${v[0].toUpperCase() + v.slice(1)}</button>`).join("")}</div>`;
   $("#panel").innerHTML =
@@ -73,7 +76,7 @@ function buildPanel() {
 }
 const ratio = () => {
   const m = root.scrollHeight - innerHeight;
-  return m > 0 ? Math.min(1, scrollY / m) : 0;
+  return m > 0 ? Math.min(1, scrollY / m) : 1;
 };
 function save() {
   if (!book || !manifest || !ready) return;
@@ -99,7 +102,7 @@ function updateNext() {
       : "Mark as finished";
 }
 async function open(i, r = 0) {
-  const my = ++token; 
+  const my = ++token;
   ready = false;
   chapter = Math.max(0, Math.min(i, manifest.chapters.length - 1));
   const c = manifest.chapters[chapter];
@@ -127,7 +130,7 @@ async function open(i, r = 0) {
   updateNext();
   requestAnimationFrame(() => {
     if (my !== token) return;
-    scrollTo(0, r * (root.scrollHeight - innerHeight));
+    scrollTo(0, (Number.isFinite(r) ? r : 0) * (root.scrollHeight - innerHeight));
     ready = ok;
     if (ok) save();
   });
@@ -163,7 +166,9 @@ async function init() {
     $("#page").removeAttribute("aria-busy");
     $("#bookTitle").textContent = "Unable to open book";
     $("#page").innerHTML = failView(
-      e.message || "Something went wrong",
+      e instanceof SyntaxError
+        ? "This book's contents could not be read"
+        : e.message || "Something went wrong",
       '<a class="btn" href="index.html">Back to library</a>',
     );
   }

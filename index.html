@@ -25,7 +25,18 @@
     <main class="wrap">
       <section id="recent" hidden>
         <h2>Continue reading</h2>
-        <div class="rail" id="recentList"></div>
+        <div class="recent-grid" id="recentList"></div>
+        <div class="more">
+          <button
+            class="btn"
+            id="recentMore"
+            aria-expanded="false"
+            aria-controls="recentList"
+            hidden
+          >
+            Show all
+          </button>
+        </div>
       </section>
       <section>
         <h1>Library</h1>
@@ -58,7 +69,7 @@
         </div>
         <nav aria-label="Footer">
           <a href="index.html">Library</a><a href="favorites.html">Favorites</a
-          ><a href="#top">Back to top</a><a href="catalog/">All books</a>
+          ><a href="#top">Back to top</a>
         </nav>
         <small>© <span id="year">2026</span> 3NDING</small>
       </div>

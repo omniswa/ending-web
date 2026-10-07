@@ -8,6 +8,7 @@ import {
   skeleton,
 } from "./app.js";
 const PER = 12,
+  RECENT = 3,
   $ = (s) => document.querySelector(s);
 const sorters = {
   new: (a, b) =>
@@ -19,19 +20,25 @@ const sorters = {
   aa: (a, b) => a.author.localeCompare(b.author),
   az: (a, b) => b.author.localeCompare(a.author),
 };
-const state = { q: "", sort: "new", page: 1 };
+const state = { q: "", sort: "new", page: 1, allRecent: false };
 let books = [],
   view = [];
 
 function renderRecent() {
   const prog = store.read("progress", {});
   const list = Object.entries(prog)
-    .sort((a, b) => b[1].updated - a[1].updated)
+    .sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0))
     .map(([id]) => books.find((b) => b.id === id))
-    .filter((b) => b && percent(b.id) > 0 && percent(b.id) < 100)
-    .slice(0, 8);
+    .filter((b) => b && percent(b.id) > 0 && percent(b.id) < 100);
+  const shown = state.allRecent ? list : list.slice(0, RECENT);
   $("#recent").hidden = !list.length;
-  $("#recentList").innerHTML = list.map((b) => card(b)).join("");
+  $("#recentList").innerHTML = shown.map((b) => card(b, { row: true })).join("");
+  const more = $("#recentMore");
+  more.hidden = list.length <= RECENT;
+  more.textContent = state.allRecent
+    ? "Show less"
+    : `Show all (${list.length})`;
+  more.setAttribute("aria-expanded", String(state.allRecent));
 }
 function render() {
   const words = state.q.split(/\s+/).filter(Boolean);
@@ -88,8 +95,16 @@ $("#pager").addEventListener("click", (e) => {
   if (p && !p.disabled) {
     state.page = +p.dataset.p;
     render();
-    $("h1").scrollIntoView({ behavior: "smooth" });
+    $("h1").scrollIntoView({
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
   }
+});
+$("#recentMore").addEventListener("click", () => {
+  state.allRecent = !state.allRecent;
+  renderRecent();
 });
 $("#grid").innerHTML = skeleton(8);
 const refresh = () => books.length && render();

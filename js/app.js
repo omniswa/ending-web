@@ -42,10 +42,28 @@ export const loadBooks = () =>
     })
     .then((list) => {
       if (!Array.isArray(list)) throw new Error("The library data is invalid");
-      return list.map((b) => ({
-        ...b,
-        _s: `${b.title} ${b.author}`.toLowerCase(),
-      }));
+      const seen = new Set();
+      return list
+        .filter(
+          (b) =>
+            b &&
+            typeof b.id === "string" &&
+            b.id &&
+            !seen.has(b.id) &&
+            seen.add(b.id),
+        )
+        .map((b) => {
+          const title = String(b.title ?? "Untitled"),
+            author = String(b.author ?? "Unknown");
+          return {
+            ...b,
+            title,
+            author,
+            added: String(b.added ?? ""),
+            cover: b.cover ? String(b.cover) : "",
+            _s: `${title} ${author}`.toLowerCase(),
+          };
+        });
     })
     .catch((e) => {
       booksPromise = null;
@@ -77,10 +95,11 @@ export function percent(id) {
   if (favs()[id]?.done) return 100;
   const p = store.read("progress", {})[id];
   if (!p || !p.total) return 0;
-  return Math.min(100, Math.floor(((p.chapter + p.ratio) / p.total) * 100));
+  return Math.min(99, Math.floor(((p.chapter + p.ratio) / p.total) * 100));
 }
 export function toast(msg) {
   const t = document.getElementById("toast");
+  if (!t) return;
   t.textContent = msg;
   t.classList.add("on");
   clearTimeout(toast.t);
@@ -94,6 +113,13 @@ document.addEventListener(
     e.target.closest(".cover").classList.add("nocover"),
   true,
 );
+document.addEventListener(
+  "load",
+  (e) =>
+    e.target.matches?.(".cover img") &&
+    e.target.closest(".cover").classList.add("loaded"),
+  true,
+);
 const yr = document.getElementById("year");
 if (yr) yr.textContent = new Date().getFullYear();
 
@@ -104,7 +130,7 @@ export const skeleton = (n = 6) =>
       '<div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div>',
   ).join("");
 
-export function card(b, { managed = false } = {}) {
+export function card(b, { managed = false, row = false } = {}) {
   const f = favs()[b.id],
     pct = percent(b.id),
     t = esc(b.title),
@@ -114,10 +140,15 @@ export function card(b, { managed = false } = {}) {
   const done = managed
     ? `<button class="icon-btn" data-act="done" aria-pressed="${!!f?.done}" aria-label="${f?.done ? "Mark as unfinished" : "Mark as finished"}: ${t}" title="Finished">${icon("check")}</button>`
     : "";
-  const page = `book/${encodeURIComponent(b.id)}/`;
-  return `<article class="card${managed ? " managed" : ""}" data-id="${esc(b.id)}"><div class="cw"><a class="cover" href="${href}" tabindex="-1" aria-hidden="true"><span class="ph">${t}</span><img loading="lazy" decoding="async" width="600" height="800" src="${esc(b.cover)}" alt="">${pct === 100 ? '<span class="badge">Finished</span>' : ""}</a><button class="icon-btn fav" data-act="fav" aria-pressed="${!!f}" aria-label="${f ? "Remove from favorites" : "Add to favorites"}: ${t}" title="Favorite">${icon("heart")}</button></div>
-<div class="meta"><h3 class="t"><a href="${page}">${t}</a></h3><p class="a">${esc(b.author)}</p>
-${pct || managed ? `<div class="prog"><b><i style="width:${pct}%"></i></b>${pct}%</div>` : ""}
+  const prog =
+    pct || managed
+      ? `<div class="prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="Reading progress: ${t}"><b><i style="width:${pct}%"></i></b>${pct}%</div>`
+      : "";
+  const img = b.cover
+    ? `<img loading="lazy" decoding="async" width="600" height="800" src="${esc(b.cover)}" alt="">`
+    : "";
+  return `<article class="card${managed ? " managed" : ""}${row ? " row" : ""}" data-id="${esc(b.id)}"><div class="cw"><a class="cover" href="${href}" tabindex="-1" aria-hidden="true"><span class="ph">${t}</span>${img}${pct === 100 ? '<span class="badge">Finished</span>' : ""}</a>${prog}<button class="icon-btn fav" data-act="fav" aria-pressed="${!!f}" aria-label="${f ? "Remove from favorites" : "Add to favorites"}: ${t}" title="Favorite">${icon("heart")}</button></div>
+<div class="meta"><h3 class="t"><a href="${href}">${t}</a></h3><p class="a">${esc(b.author)}</p>
 <div class="acts"><a class="btn primary" href="${href}"${pct === 100 ? ' data-act="again"' : ""}>${label}</a>${done}<button class="icon-btn" data-act="share" aria-label="Share: ${t}" title="Share">${icon("share")}</button></div></div></article>`;
 }
 
@@ -125,9 +156,11 @@ export function bindCards(root, books, onChange) {
   root.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-act]");
     if (!btn) return;
-    const id = btn.closest(".card").dataset.id,
+    const cardEl = btn.closest(".card"),
+      id = cardEl.dataset.id,
       b = books.find((x) => x.id === id),
-      act = btn.dataset.act;
+      act = btn.dataset.act,
+      index = [...root.querySelectorAll(".card")].indexOf(cardEl);
     if (act === "fav") {
       toast(toggleFav(id) ? "Added to favorites" : "Removed from favorites");
     } else if (act === "done") {
@@ -161,8 +194,12 @@ export function bindCards(root, books, onChange) {
       return;
     }
     onChange();
-    root
-      .querySelector(`.card[data-id="${CSS.escape(id)}"] [data-act="${act}"]`)
+    const sel = `[data-act="${act}"]`;
+    const same = root.querySelector(
+      `.card[data-id="${CSS.escape(id)}"] ${sel}`,
+    );
+    const cards = [...root.querySelectorAll(".card")];
+    (same ?? (cards[index] ?? cards[cards.length - 1])?.querySelector(sel))
       ?.focus();
   });
 }
