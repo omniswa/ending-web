@@ -3,6 +3,7 @@ import {
   card,
   bindCards,
   favs,
+  isFav,
   percent,
   showError,
   skeleton,
@@ -25,9 +26,10 @@ const match = (b, f) => {
 function render() {
   const f = favs();
   const list = books
-    .filter((b) => f[b.id])
+    .filter((b) => isFav(f, b.id))
     .sort((a, b) => (f[b.id].at || 0) - (f[a.id].at || 0))
     .filter((b) => match(b, f));
+  $("#grid").removeAttribute("aria-busy");
   $("#grid").innerHTML = list
     .slice(0, shown)
     .map((b) => card(b, { managed: true }))
@@ -37,7 +39,7 @@ function render() {
   $("#more").textContent = `Show more (${rest})`;
   $("#empty").hidden = list.length > 0;
   $("#emptyMsg").textContent = EMPTY[filter];
-  const has = Object.keys(f).length;
+  const has = Object.keys(f).filter((id) => isFav(f, id)).length;
   $("#tabs").hidden = !has;
   if (!has && filter !== "all") {
     filter = "all";
@@ -61,6 +63,7 @@ $("#tabs").addEventListener("click", (e) => {
     .forEach((x) => x.setAttribute("aria-pressed", x === b));
   render();
 });
+$("#grid").setAttribute("aria-busy", "true");
 $("#grid").innerHTML = skeleton(6);
 const refresh = () => books.length && render();
 addEventListener("pageshow", (e) => e.persisted && refresh());

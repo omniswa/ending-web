@@ -3,6 +3,7 @@ import {
   card,
   bindCards,
   obj,
+  favs,
   norm,
   percent,
   showError,
@@ -59,6 +60,7 @@ function renderRecent() {
   $("#recentList").innerHTML = shown
     .map((b) => card(b, { row: true }))
     .join("");
+  $("#recentList").removeAttribute("aria-busy");
   const more = $("#recentMore");
   more.hidden = list.length <= RECENT;
   more.textContent = state.allRecent
@@ -72,6 +74,7 @@ function render() {
   const pages = Math.max(1, Math.ceil(view.length / PER));
   state.page = Math.min(state.page, pages);
   syncUrl();
+  $("#grid").removeAttribute("aria-busy");
   $("#count").textContent =
     `${view.length.toLocaleString()} ${view.length === 1 ? "book" : "books"}`;
   $("#grid").innerHTML = view.length
@@ -136,7 +139,28 @@ $("#recentMore").addEventListener("click", () => {
   state.allRecent = !state.allRecent;
   renderRecent();
 });
-$("#grid").innerHTML = skeleton(8);
+// Loading state. The library is empty until books.json arrives, so show
+// placeholders shaped like the real content (including the "Continue reading"
+// row, which is known from localStorage) to keep the page from jumping.
+const pendingRecent = () => {
+  const done = favs();
+  return Object.entries(obj("progress")).filter(
+    ([id, p]) =>
+      p &&
+      p.total > 0 &&
+      !done[id]?.done &&
+      Math.floor(((p.chapter + p.ratio) / p.total) * 100) > 0,
+  ).length;
+};
+$("#count").textContent = "Loading library…";
+$("#grid").setAttribute("aria-busy", "true");
+$("#grid").innerHTML = skeleton(12);
+const nRecent = Math.min(RECENT, pendingRecent());
+if (nRecent) {
+  $("#recent").hidden = false;
+  $("#recentList").setAttribute("aria-busy", "true");
+  $("#recentList").innerHTML = skeleton(nRecent, { row: true });
+}
 const stats = mountStats($("main"), () => books.length && render());
 const refresh = () => {
   stats();
@@ -152,4 +176,10 @@ loadBooks()
     bindCards($("#recentList"), books, render);
     render();
   })
-  .catch((e) => showError($("#grid"), e));
+  .catch((e) => {
+    $("#recent").hidden = true;
+    $("#recentList").innerHTML = "";
+    $("#recentList").removeAttribute("aria-busy");
+    $("#count").textContent = "";
+    showError($("#grid"), e);
+  });

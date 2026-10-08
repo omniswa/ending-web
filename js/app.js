@@ -23,7 +23,7 @@ export const esc = (s) =>
 export const norm = (s) =>
   String(s)
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
 let warned = false;
@@ -53,9 +53,24 @@ export const obj = (k) => {
   return v && typeof v === "object" && !Array.isArray(v) ? v : {};
 };
 
+// fetch() with a timeout, so a stalled request ends in an error message
+// instead of leaving a skeleton on screen forever.
+export async function fetchTimeout(url, opts = {}, ms = 20000) {
+  try {
+    return await fetch(url, {
+      ...opts,
+      signal: AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined,
+    });
+  } catch (e) {
+    if (e?.name === "TimeoutError") throw new Error("This is taking too long");
+    if (e instanceof TypeError) throw new Error("You seem to be offline");
+    throw e;
+  }
+}
+
 let booksPromise;
 export const loadBooks = () =>
-  (booksPromise ??= fetch("books.json", { cache: "no-cache" })
+  (booksPromise ??= fetchTimeout("books.json", { cache: "no-cache" })
     .then((r) => {
       if (!r.ok) throw new Error("Could not load the library");
       return r.json();
@@ -91,19 +106,29 @@ export const loadBooks = () =>
       throw e;
     }));
 
+// "favs" holds one entry per book that is favorited and/or finished.
+// `fav: false` marks a finished book that is NOT a favorite. Entries without
+// the flag (including all data saved by older versions) count as favorites.
 export const favs = () => obj("favs");
+export const isFav = (f, id) => !!f[id] && f[id].fav !== false;
 export function toggleFav(id) {
   const f = favs();
-  f[id] ? delete f[id] : (f[id] = { at: Date.now(), done: false });
+  if (isFav(f, id)) {
+    // Un-favoriting a finished book must not wipe its finished state.
+    if (f[id].done) f[id] = { ...f[id], fav: false };
+    else delete f[id];
+  } else {
+    f[id] = { at: Date.now(), done: !!f[id]?.done };
+  }
   store.write("favs", f);
-  return !!f[id];
+  return isFav(f, id);
 }
 export function setDone(id, done) {
   const f = favs();
-  if (f[id]) {
-    f[id].done = done;
-    store.write("favs", f);
-  }
+  if (!f[id]) return;
+  if (!done && f[id].fav === false) delete f[id];
+  else f[id].done = done;
+  store.write("favs", f);
 }
 export function resetProgress(id) {
   const p = obj("progress");
@@ -144,15 +169,17 @@ document.addEventListener(
 const yr = document.getElementById("year");
 if (yr) yr.textContent = new Date().getFullYear();
 
-export const skeleton = (n = 6) =>
-  Array.from(
-    { length: n },
-    () =>
-      '<div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div>',
+export const skeleton = (n = 6, { row = false } = {}) =>
+  Array.from({ length: n }, () =>
+    row
+      ? '<div class="card row sk" aria-hidden="true"><div class="cover"></div><div class="meta"><i></i><i></i></div></div>'
+      : '<div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div>',
   ).join("");
 
 export function card(b, { managed = false, row = false } = {}) {
-  const f = favs()[b.id],
+  const all = favs(),
+    f = all[b.id],
+    fav = isFav(all, b.id),
     pct = percent(b.id),
     t = esc(b.title),
     href = `reader.html?id=${encodeURIComponent(b.id)}`;
@@ -168,7 +195,7 @@ export function card(b, { managed = false, row = false } = {}) {
   const img = b.cover
     ? `<img loading="lazy" decoding="async" width="600" height="800" src="${esc(b.cover)}" alt="">`
     : "";
-  return `<article class="card${managed ? " managed" : ""}${row ? " row" : ""}" data-id="${esc(b.id)}"><div class="cw"><a class="cover" href="${href}" tabindex="-1" aria-hidden="true"><span class="ph">${t}</span>${img}${pct === 100 ? '<span class="badge">Finished</span>' : ""}</a>${prog}<button class="icon-btn fav" data-act="fav" aria-pressed="${!!f}" aria-label="${f ? "Remove from favorites" : "Add to favorites"}: ${t}" title="Favorite">${icon("heart")}</button></div>
+  return `<article class="card${managed ? " managed" : ""}${row ? " row" : ""}" data-id="${esc(b.id)}"><div class="cw"><a class="cover${b.cover ? "" : " nocover"}" href="${href}" tabindex="-1" aria-hidden="true"><span class="ph">${t}</span>${img}${pct === 100 ? '<span class="badge">Finished</span>' : ""}</a>${prog}<button class="icon-btn fav" data-act="fav" aria-pressed="${fav}" aria-label="${fav ? "Remove from favorites" : "Add to favorites"}: ${t}" title="Favorite">${icon("heart")}</button></div>
 <div class="meta"><h3 class="t"><a href="${href}">${t}</a></h3><p class="a">${esc(b.author)}</p>
 <div class="acts"><a class="btn primary" href="${href}"${pct === 100 ? ' data-act="again"' : ""}>${label}</a>${done}<button class="icon-btn" data-act="share" aria-label="Share: ${t}" title="Share">${icon("share")}</button></div></div></article>`;
 }
@@ -226,5 +253,6 @@ export function bindCards(root, books, onChange) {
   });
 }
 export const showError = (el, e) => {
-  el.innerHTML = `<div class="empty"><p>${esc(e.message || "Something went wrong")}. Check your connection and try again.</p><button class="btn primary" onclick="location.reload()">Try again</button></div>`;
+  el.removeAttribute("aria-busy");
+  el.innerHTML =`<div class="empty"><p>${esc(e.message || "Something went wrong")}. Check your connection and try again.</p><button class="btn primary" onclick="location.reload()">Try again</button></div>`;
 };
