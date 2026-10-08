@@ -824,9 +824,11 @@ nav a[aria-current] {
   border-color: var(--accent);
 }
 .st-data {
+  font-size: 0.85rem;
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -875,7 +877,7 @@ nav a[aria-current] {
     display: none;
   }
   .stats {
-    padding: 1rem 0 0.5rem;
+    padding: 1rem;
   }
 }
 
