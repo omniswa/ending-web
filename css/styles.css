@@ -975,3 +975,193 @@ nav a[aria-current] {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* Write / editor */
+.lead {
+  max-width: 60ch;
+  color: var(--muted);
+  margin-bottom: 1.2rem;
+}
+.ed {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+  margin-bottom: 2rem;
+}
+.ed-side,
+.ed-main,
+.ed-out {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  min-width: 0;
+}
+.ed-out h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.fld-row {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.in {
+  width: 100%;
+  height: 40px;
+  padding: 0 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+}
+.ed-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.chl {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+  max-height: 320px;
+  overflow: auto;
+}
+.chl li {
+  display: flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+}
+.chl li.on {
+  background: var(--bg);
+  border-color: var(--accent);
+}
+.chl .go {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.6rem;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+}
+.chl .go span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chl .go small {
+  flex: none;
+  color: var(--muted);
+}
+.chl .mv {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.chl .mv:hover:not(:disabled) {
+  color: var(--accent);
+  background: var(--surface);
+}
+.chl .mv:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.ed-title {
+  height: 48px;
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+.ed-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.ed-bar .seg {
+  grid-auto-columns: auto;
+}
+.ed-bar .seg button {
+  padding: 0 1rem;
+}
+.ed-meta,
+.ed-hint {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.ed-text {
+  height: auto;
+  min-height: 55dvh;
+  padding: 0.9rem;
+  resize: vertical;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+.ed-prev {
+  width: 100%;
+  min-height: 55dvh;
+  padding: 0.5rem 0.25rem;
+}
+.chk {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+.chk b {
+  display: inline-block;
+  width: 1.2em;
+}
+.chk .ok b {
+  color: var(--accent);
+}
+.chk .bad b {
+  color: #c0392b;
+}
+.chk .warn {
+  color: var(--muted);
+}
+.steps {
+  padding-left: 1.2rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  display: grid;
+  gap: 0.2rem;
+}
+@media (min-width: 860px) {
+  .ed {
+    grid-template-columns: 290px minmax(0, 1fr);
+  }
+  .ed-side {
+    position: sticky;
+    top: 74px;
+    max-height: calc(100dvh - 90px);
+    overflow: auto;
+  }
+  .ed-out {
+    grid-column: 1/-1;
+  }
+}
+@media (max-width: 520px) {
+  nav:not(.pager) a {
+    padding: 0.4rem 0.6rem;
+  }
+}

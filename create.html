@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="index,follow" />
+    <title>3NDING – Write</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <link rel="preload" href="fonts/sans.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/serif.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/mono.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body id="top">
+    <header class="top">
+      <div class="wrap">
+        <a class="brand" href="index.html">3NDING</a>
+        <nav aria-label="Main">
+          <a href="index.html">Library</a
+          ><a href="favorites.html">Favorites</a
+          ><a href="create.html" aria-current="page">Write</a>
+        </nav>
+      </div>
+    </header>
+    <main class="wrap">
+      <h1>Write</h1>
+      <p class="lead">
+        Write a book chapter by chapter, or just keep notes. Everything is saved
+        on this device as you type. When a book is ready, bundle it into a zip
+        and send it to be added to the library.
+      </p>
+      <noscript><p class="muted">The editor needs JavaScript.</p></noscript>
+
+      <div class="ed">
+        <aside class="ed-side" aria-label="Book and chapters">
+          <div class="fld-row">
+            <label for="nb">Notebook</label>
+            <select id="nb" class="in"></select>
+            <div class="ed-acts">
+              <button class="btn" id="nbNew">New</button>
+              <button class="btn" id="nbDel">Delete</button>
+            </div>
+          </div>
+          <label class="fld-row">Book title
+            <input id="mTitle" class="in" type="text" maxlength="120" autocomplete="off" />
+          </label>
+          <label class="fld-row">Author
+            <input id="mAuthor" class="in" type="text" maxlength="120" autocomplete="name" />
+          </label>
+          <label class="fld-row">Language code
+            <input id="mLang" class="in" type="text" maxlength="12" list="langs" autocomplete="off" spellcheck="false" />
+            <datalist id="langs">
+              <option value="en"></option><option value="es"></option><option value="fr"></option>
+              <option value="de"></option><option value="it"></option><option value="pt"></option>
+              <option value="tl"></option><option value="ja"></option><option value="zh"></option>
+              <option value="ko"></option><option value="ru"></option>
+            </datalist>
+          </label>
+          <div class="fld-row">
+            <span id="chLbl">Chapters</span>
+            <ol class="chl" id="chList" aria-labelledby="chLbl"></ol>
+            <div class="ed-acts">
+              <button class="btn primary" id="chAdd">Add chapter</button>
+              <button class="btn" id="imp">Import</button>
+              <input id="impFile" type="file" accept=".zip,.txt,.md,.markdown" multiple hidden />
+            </div>
+          </div>
+        </aside>
+
+        <section class="ed-main" aria-label="Chapter editor">
+          <input id="chTitle" class="in ed-title" type="text" maxlength="120" aria-label="Chapter title" autocomplete="off" />
+          <div class="ed-bar">
+            <div class="seg" role="group" aria-label="Mode">
+              <button id="modeEdit" aria-pressed="true">Write</button>
+              <button id="modePrev" aria-pressed="false">Preview</button>
+            </div>
+            <span class="ed-meta" id="stat" aria-live="polite"></span>
+          </div>
+          <textarea id="body" class="in ed-text" aria-label="Chapter text" spellcheck="true"></textarea>
+          <article class="page ed-prev" id="prev" hidden></article>
+          <p class="ed-hint">Leave a blank line between paragraphs. A single line break is treated as a space when the book is read.</p>
+        </section>
+
+        <section class="ed-out" aria-label="Bundle and send">
+          <h2>Bundle &amp; contribute</h2>
+          <ul class="chk" id="chk" aria-live="polite"></ul>
+          <div class="ed-acts">
+            <button class="btn primary" id="dl">Download .zip</button>
+            <button class="btn" id="share" hidden>Share .zip</button>
+            <button class="btn" id="md">Export Markdown</button>
+          </div>
+          <ol class="steps">
+            <li>Download the zip.</li>
+            <li id="sendStep">Send it to the library owner.</li>
+          </ol>
+          <div class="ed-acts" id="sendLinks"></div>
+        </section>
+      </div>
+    </main>
+    <footer class="foot">
+      <div class="wrap">
+        <div>
+          <a class="brand" href="index.html">3NDING</a>
+          <p>A quiet place to read.</p>
+        </div>
+        <nav aria-label="Footer">
+          <a href="index.html">Library</a><a href="favorites.html">Favorites</a
+          ><a href="create.html">Write</a><a href="#top">Back to top</a>
+        </nav>
+        <small>© <span id="year">2026</span> 3NDING</small>
+      </div>
+    </footer>
+    <div class="toast" id="toast" role="status"></div>
+    <script type="module" src="js/create.js"></script>
+  </body>
+</html>
