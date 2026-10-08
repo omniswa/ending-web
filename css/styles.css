@@ -1151,7 +1151,6 @@ nav a[aria-current] {
     grid-template-columns: 290px minmax(0, 1fr);
   }
   .ed-side {
-    position: sticky;
     top: 74px;
     max-height: calc(100dvh - 90px);
     overflow: auto;
