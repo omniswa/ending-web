@@ -544,7 +544,8 @@ nav a[aria-current] {
 .panel[hidden] {
   display: none;
 }
-.panel label {
+.panel label,
+.panel .fld {
   display: grid;
   gap: 0.4rem;
   font-size: 0.85rem;

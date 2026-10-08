@@ -141,10 +141,10 @@ function apply() {
 function buildPanel() {
   if (panelBuilt) return;
   panelBuilt = true;
-  const seg = (k) =>
-    `<div class="seg">${OPTS[k].map((v) => `<button data-k="${k}" data-v="${v}">${v[0].toUpperCase() + v.slice(1)}</button>`).join("")}</div>`;
+  const seg = (k, name) =>
+    `<div class="fld" role="group" aria-label="${name}">${name}<div class="seg">${OPTS[k].map((v) => `<button data-k="${k}" data-v="${v}">${v[0].toUpperCase() + v.slice(1)}</button>`).join("")}</div></div>`;
   $("#panel").innerHTML =
-    `<label>Font${seg("font")}</label><label>Theme${seg("theme")}</label><label><span class="row">Font size<b id="sizeVal"></b></span><input id="size" type="range" min="14" max="32" step="1"></label><label><span class="row">Line height<b id="lhVal"></b></span><input id="lh" type="range" min="1.4" max="2.2" step="0.05"></label><label>Alignment${seg("align")}</label>${canSpeak ? '<label><span class="row">Voice speed<b id="rateVal"></b></span><input id="rate" type="range" min="0.6" max="2" step="0.1"></label>' : ""}<button class="btn" id="reset">Reset to defaults</button>`;
+    `${seg("font", "Font")}${seg("theme", "Theme")}<label><span class="row">Font size<b id="sizeVal"></b></span><input id="size" type="range" min="14" max="32" step="1"></label><label><span class="row">Line height<b id="lhVal"></b></span><input id="lh" type="range" min="1.4" max="2.2" step="0.05"></label>${seg("align", "Alignment")}${canSpeak ? '<label><span class="row">Voice speed<b id="rateVal"></b></span><input id="rate" type="range" min="0.6" max="2" step="0.1"></label>' : ""}<button class="btn" id="reset">Reset to defaults</button>`;
   $("#panel").addEventListener("click", (e) => {
     const b = e.target.closest("[data-k]");
     if (b) {
