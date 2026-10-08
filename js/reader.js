@@ -73,15 +73,16 @@ let settings = clean(store.read("reader", {})),
   pending = null,
   selTimer,
   lastAct = Date.now();
-const synth = window.speechSynthesis,
+const canSpeak =
+    "speechSynthesis" in window && "SpeechSynthesisUtterance" in window,
+  synth = canSpeak ? window.speechSynthesis : null,
   tts = { on: false, u: null },
   reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 $("#fs").insertAdjacentHTML(
   "beforebegin",
-  `<button class="icon-btn" id="tts" aria-label="Read aloud" aria-pressed="false">${svg('<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>')}</button><button class="icon-btn" id="hlBtn" aria-label="Highlights">${svg('<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>')}</button>`,
+  `${canSpeak ? `<button class="icon-btn" id="tts" aria-label="Read aloud" aria-pressed="false">${svg('<path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>')}</button>` : ""}<button class="icon-btn" id="hlBtn" aria-label="Highlights">${svg('<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/>')}</button>`,
 );
-if (!synth) $("#tts").hidden = true;
 document.body.insertAdjacentHTML(
   "beforeend",
   `<div id="hlbar" hidden><button class="btn primary" data-a="save">Highlight</button><button class="btn" data-a="card">Share card</button></div>
@@ -130,6 +131,8 @@ function apply() {
   if ($("#lh")) {
     $("#lh").value = settings.lh;
     $("#lhVal").textContent = settings.lh.toFixed(2);
+  }
+  if ($("#rate")) {
     $("#rate").value = settings.rate;
     $("#rateVal").textContent = settings.rate.toFixed(1) + "×";
   }
@@ -141,7 +144,7 @@ function buildPanel() {
   const seg = (k) =>
     `<div class="seg">${OPTS[k].map((v) => `<button data-k="${k}" data-v="${v}">${v[0].toUpperCase() + v.slice(1)}</button>`).join("")}</div>`;
   $("#panel").innerHTML =
-    `<label>Font${seg("font")}</label><label>Theme${seg("theme")}</label><label><span class="row">Font size<b id="sizeVal"></b></span><input id="size" type="range" min="14" max="32" step="1"></label><label><span class="row">Line height<b id="lhVal"></b></span><input id="lh" type="range" min="1.4" max="2.2" step="0.05"></label><label>Alignment${seg("align")}</label><label><span class="row">Voice speed<b id="rateVal"></b></span><input id="rate" type="range" min="0.6" max="2" step="0.1"></label><button class="btn" id="reset">Reset to defaults</button>`;
+    `<label>Font${seg("font")}</label><label>Theme${seg("theme")}</label><label><span class="row">Font size<b id="sizeVal"></b></span><input id="size" type="range" min="14" max="32" step="1"></label><label><span class="row">Line height<b id="lhVal"></b></span><input id="lh" type="range" min="1.4" max="2.2" step="0.05"></label><label>Alignment${seg("align")}</label>${canSpeak ? '<label><span class="row">Voice speed<b id="rateVal"></b></span><input id="rate" type="range" min="0.6" max="2" step="0.1"></label>' : ""}<button class="btn" id="reset">Reset to defaults</button>`;
   $("#panel").addEventListener("click", (e) => {
     const b = e.target.closest("[data-k]");
     if (b) {
@@ -154,7 +157,7 @@ function buildPanel() {
     ["lh", "lh"],
     ["rate", "rate"],
   ])
-    $("#" + id).addEventListener("input", (e) => {
+    $("#" + id)?.addEventListener("input", (e) => {
       settings[key] = +e.target.value;
       apply();
     });
@@ -235,7 +238,7 @@ function speakFrom(i) {
   tts.u = u;
   synth.speak(u);
 }
-$("#tts").addEventListener("click", () => {
+$("#tts")?.addEventListener("click", () => {
   if (tts.on) return ttsStop();
   if (!ready) return;
   tts.on = true;
@@ -315,7 +318,7 @@ async function init() {
     const id = new URLSearchParams(location.search).get("id");
     book = (await loadBooks()).find((b) => b.id === id);
     if (!book) throw new Error("Book not found");
-    const res = await fetchTimeout(book.zip);
+    const res = await fetchTimeout(book.zip, {}, 60000);
     if (!res.ok) throw new Error("Could not download this book");
     read = await readZip(await res.arrayBuffer());
     manifest = JSON.parse(await read("manifest.json"));
