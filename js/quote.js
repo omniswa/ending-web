@@ -7,12 +7,24 @@ const css = (n, d) =>
 function wrap(ctx, text, max) {
   const lines = [];
   let cur = "";
-  for (const w of text.split(" ")) {
-    const t = cur ? cur + " " + w : w;
+  const push = (w, sep) => {
+    const t = cur ? cur + sep + w : w;
     if (ctx.measureText(t).width > max && cur) {
       lines.push(cur);
       cur = w;
     } else cur = t;
+  };
+  for (const w of text.split(" ")) {
+    if (ctx.measureText(w).width <= max) push(w, " ");
+    else {
+      // A "word" wider than the card (a long token, or text written without
+      // spaces): break it character by character instead of overflowing.
+      if (cur) {
+        lines.push(cur);
+        cur = "";
+      }
+      for (const ch of Array.from(w)) push(ch, "");
+    }
   }
   return cur ? [...lines, cur] : lines;
 }
@@ -52,11 +64,12 @@ export async function quoteBlob({ text, title, author }) {
   let size = 72,
     lines,
     lh;
-  for (; size >= 34; size -= 4) {
+  for (;;) {
     x.font = `italic 500 ${size}px ${serif}`;
     lines = wrap(x, text, maxW);
     lh = size * 1.4;
-    if (lines.length * lh <= area) break;
+    if (lines.length * lh <= area || size <= 34) break;
+    size -= 4;
   }
   x.fillStyle = fg;
   const y0 = top + Math.max(0, (area - lines.length * lh) / 2) + size;

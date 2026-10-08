@@ -52,10 +52,13 @@ export function importData(text) {
     const f = obj("favs");
     for (const [id, v] of Object.entries(d.favs)) {
       if (!okKey(id) || !isObj(v)) continue;
+      const cur = f[id],
+        fav = cur ? cur.fav !== false || v.fav !== false : v.fav !== false;
       f[id] = {
-        at: f[id]?.at ?? (Number.isFinite(v.at) ? v.at : Date.now()),
-        done: !!(f[id]?.done || v.done),
+        at: cur?.at ?? (Number.isFinite(v.at) ? v.at : Date.now()),
+        done: !!(cur?.done || v.done),
       };
+      if (!fav) f[id].fav = false;
       n.favs++;
     }
     save("favs", f);
@@ -96,7 +99,14 @@ export function importData(text) {
     save("days", cur);
   }
   if (GOALS.includes(+d.goal)) save("goal", +d.goal);
-  if (isObj(d.reader)) save("reader", d.reader);
+  if (isObj(d.reader)) {
+    // Keep only known settings with primitive values (reader.js validates the rest).
+    const r = {};
+    for (const k of ["font", "theme", "size", "align", "lh", "rate"])
+      if (["string", "number"].includes(typeof d.reader[k]))
+        r[k] = d.reader[k];
+    save("reader", r);
+  }
   if (Array.isArray(d.highlights)) {
     const raw = store.read("highlights", []);
     const all = Array.isArray(raw) ? raw : [];

@@ -1,4 +1,13 @@
-import { loadBooks, store, obj, favs, icon, esc, toast } from "./app.js";
+import {
+  loadBooks,
+  fetchTimeout,
+  store,
+  obj,
+  favs,
+  icon,
+  esc,
+  toast,
+} from "./app.js";
 import { readZip } from "./zip.js";
 import { addTime } from "./stats.js";
 import { shareCard } from "./quote.js";
@@ -23,7 +32,23 @@ const OPTS = {
   align: ["left", "justify"],
 };
 const SKELETON =
-  '<div class="skl" aria-hidden="true">' + "<i></i>".repeat(10) + "</div>";
+  '<div class="skl" aria-hidden="true"><i class="h"></i>' +
+  "<i></i>".repeat(10) +
+  "</div>";
+// Resolve on the next frame, but never hang in a background tab (where
+// requestAnimationFrame is paused) - read-aloud keeps advancing chapters there.
+const nextFrame = () =>
+  new Promise((res) => {
+    if (document.hidden) return res();
+    requestAnimationFrame(() => res());
+    setTimeout(res, 150);
+  });
+// Web fonts arriving late reflow the page, which would make a restored scroll
+// position (and the progress saved from it) land in the wrong place.
+const fontsReady = () =>
+  document.fonts && document.fonts.status === "loading"
+    ? Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1200))])
+    : Promise.resolve();
 const svg = (p) =>
   `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const failView = (msg, extra = "") =>
@@ -231,10 +256,20 @@ async function open(i, r = 0, keepTts = false) {
   chapter = Math.max(0, Math.min(i, manifest.chapters.length - 1));
   const c = manifest.chapters[chapter];
   $("#page").setAttribute("aria-busy", "true");
-  $("#page").innerHTML = SKELETON;
+  // Chapters are already in memory, so when one is on screen keep showing it and
+  // only fall back to the skeleton if loading drags on. Flashing a skeleton for a
+  // few milliseconds on every page turn just looks like flicker.
+  let skTimer = 0;
+  const showSkeleton = () => {
+    if (my === token) $("#page").innerHTML = SKELETON;
+  };
+  if ($("#page").querySelector(":scope > p, :scope > h2"))
+    skTimer = setTimeout(showSkeleton, 150);
+  else showSkeleton();
   let ok = true;
   try {
     const text = await read(c.file);
+    clearTimeout(skTimer);
     if (my !== token) return;
     const hs = highlights().filter(
       (h) => h.book === book.id && h.chapter === chapter,
@@ -248,6 +283,7 @@ async function open(i, r = 0, keepTts = false) {
         .map((s, idx) => `<p>${markup(s, forPara(hs, idx))}</p>`)
         .join("");
   } catch (e) {
+    clearTimeout(skTimer);
     if (my !== token) return;
     ok = false;
     $("#page").innerHTML = failView(e.message || "Could not load this chapter");
@@ -256,20 +292,21 @@ async function open(i, r = 0, keepTts = false) {
   $("#chapters").value = chapter;
   $("#prev").disabled = chapter === 0;
   updateNext();
-  requestAnimationFrame(() => {
-    if (my !== token) return;
-    const m =
-      jump && document.querySelector(`mark[data-h="${CSS.escape(jump)}"]`);
-    jump = null;
-    if (m) m.scrollIntoView({ block: "center" });
-    else
-      scrollTo(
-        0,
-        (Number.isFinite(r) ? r : 0) * (root.scrollHeight - innerHeight),
-      );
-    ready = ok;
-    if (ok) save();
-  });
+  // Restore the scroll position only once layout (and web fonts) have settled,
+  // and resolve only after that, so callers like read-aloud start at the right place.
+  await nextFrame();
+  if (ok) await fontsReady();
+  if (my !== token) return;
+  const m = jump && document.querySelector(`mark[data-h="${CSS.escape(jump)}"]`);
+  jump = null;
+  if (m) m.scrollIntoView({ block: "center" });
+  else
+    scrollTo(
+      0,
+      (Number.isFinite(r) ? r : 0) * (root.scrollHeight - innerHeight),
+    );
+  ready = ok;
+  if (ok) save();
 }
 async function init() {
   history.scrollRestoration = "manual";
@@ -278,18 +315,26 @@ async function init() {
   if (!document.fullscreenEnabled) $("#fs").hidden = true;
   buildPanel();
   apply();
+  $("#bookTitle").textContent = "Loading…";
+  $("#chapters").disabled = true;
+  $("#chapters").innerHTML = "<option>Chapters</option>";
   $("#page").setAttribute("aria-busy", "true");
   $("#page").innerHTML = SKELETON;
   try {
     const id = new URLSearchParams(location.search).get("id");
     book = (await loadBooks()).find((b) => b.id === id);
     if (!book) throw new Error("Book not found");
-    const res = await fetch(book.zip);
+    const res = await fetchTimeout(book.zip);
     if (!res.ok) throw new Error("Could not download this book");
     read = await readZip(await res.arrayBuffer());
     manifest = JSON.parse(await read("manifest.json"));
-    if (!Array.isArray(manifest.chapters) || !manifest.chapters.length)
+    if (!manifest || !Array.isArray(manifest.chapters))
       throw new Error("This book has no chapters");
+    // Drop malformed entries and make sure every chapter has a usable title.
+    manifest.chapters = manifest.chapters
+      .filter((c) => c && typeof c.file === "string" && c.file)
+      .map((c, i) => ({ file: c.file, title: String(c.title || `Chapter ${i + 1}`) }));
+    if (!manifest.chapters.length) throw new Error("This book has no chapters");
     manifest.title = String(manifest.title || book.title);
     if (/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(manifest.lang || ""))
       root.lang = manifest.lang;
@@ -298,6 +343,7 @@ async function init() {
     $("#chapters").innerHTML = manifest.chapters
       .map((c, i) => `<option value="${i}">${i + 1}. ${esc(c.title)}</option>`)
       .join("");
+    $("#chapters").disabled = false;
     const p = obj("progress")[id];
     await open(p?.chapter ?? 0, p?.ratio ?? 0);
   } catch (e) {
@@ -449,8 +495,11 @@ $("#prev").addEventListener("click", () => open(chapter - 1));
 $("#next").addEventListener("click", () => {
   if (!isLast()) return open(chapter + 1);
   if (favs()[book.id]?.done) return (location.href = "index.html");
-  const f = favs();
-  f[book.id] = { at: f[book.id]?.at ?? Date.now(), done: true };
+  const f = favs(),
+    e = f[book.id];
+  // Finishing a book must not silently add it to Favorites: keep the entry's
+  // favorite state if it has one, otherwise record it as finished-only.
+  f[book.id] = e ? { ...e, done: true } : { at: Date.now(), done: true, fav: false };
   store.write("favs", f);
   toast("Marked as finished");
   updateNext();
