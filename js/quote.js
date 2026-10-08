@@ -35,9 +35,9 @@ function fit(ctx, s, max) {
 export async function quoteBlob({ text, title, author }) {
   try {
     await Promise.all([
-      document.fonts.load('italic 500 60px "Newsreader"'),
-      document.fonts.load('600 40px "Newsreader"'),
-      document.fonts.load('400 32px "Instrument Sans"'),
+      document.fonts.load('italic 500 60px "IS Serif"'),
+      document.fonts.load('600 40px "For Serif"'),
+      document.fonts.load('400 32px "For Sans"'),
     ]);
   } catch {}
   const c = document.createElement("canvas");
@@ -48,8 +48,8 @@ export async function quoteBlob({ text, title, author }) {
     fg = css("--text", "#222"),
     mu = css("--muted", "#6b6b66"),
     ac = css("--accent", "#0f6b61"),
-    serif = '"Newsreader", Georgia, serif',
-    ui = '"Instrument Sans", system-ui, sans-serif',
+    serif = '"For Serif", Georgia, serif',
+    ui = '"For Sans", system-ui, sans-serif',
     maxW = W - PAD * 2,
     top = 360,
     area = 700;

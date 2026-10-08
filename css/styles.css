@@ -1,3 +1,15 @@
+@font-face {
+  font-family: "For Sans";
+  src: url(../fonts/sans.woff2) format("woff2");
+}
+@font-face {
+  font-family: "For Serif";
+  src: url(../fonts/serif.woff2) format("woff2");
+}
+@font-face {
+  font-family: "For Mono";
+  src: url(../fonts/mono.woff2) format("woff2");
+}
 :root {
   color-scheme: light;
   --bg: #eef1ee;
@@ -10,8 +22,8 @@
   --shadow: 0 1px 2px #0001, 0 12px 28px -16px #0004;
   --sk: color-mix(in srgb, var(--text) 11%, var(--bg));
   --sk-hi: color-mix(in srgb, var(--text) 19%, var(--bg));
-  --ui: "Instrument Sans", system-ui, sans-serif;
-  --serif: "Newsreader", Georgia, serif;
+  --ui: "For Sans", system-ui, sans-serif;
+  --serif: "For Serif", Georgia, serif;
   --font: var(--serif);
   --size: 19px;
   --align: left;
@@ -395,7 +407,7 @@ nav a[aria-current] {
 }
 .foot {
   border-top: 1px solid var(--line);
-  padding: 2rem 0 2.5rem;
+  padding: 2rem 0;
   color: var(--muted);
   font-size: 0.88rem;
 }
@@ -926,7 +938,7 @@ nav a[aria-current] {
     justify-content: center;
   }
   .toast {
-    width: min(50vw, 100%);
+    width: min(60vw, 100%);
   }
 }
 

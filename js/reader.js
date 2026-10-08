@@ -24,7 +24,7 @@ const DEFAULTS = {
 const FONTS = {
   serif: "var(--serif)",
   sans: "var(--ui)",
-  mono: '"JetBrains Mono",monospace',
+  mono: '"Courier Mono",monospace',
 };
 const OPTS = {
   font: ["serif", "sans", "mono"],
@@ -438,7 +438,7 @@ function renderHl() {
             `<li data-id="${esc(h.id)}"><blockquote>${esc(h.text)}</blockquote><small>${esc(h.ch || "")}</small><div class="hl-act"><button class="btn" data-a="go">Go to</button><button class="btn" data-a="card">Share card</button><button class="btn" data-a="del">Delete</button></div></li>`,
         )
         .join("")
-    : '<li class="muted">No highlights yet. Select a short passage (up to 300 characters) and tap Highlight.</li>';
+    : '<li class="muted">No highlights yet.</li>';
 }
 $("#hlBtn").addEventListener("click", () => {
   renderHl();

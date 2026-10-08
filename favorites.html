@@ -5,11 +5,31 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="robots" content="noindex,follow" />
     <title>3NDING – Favorites</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
     <link
-      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="fonts/sans.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="fonts/serif.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="fonts/mono.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
     <link rel="stylesheet" href="css/styles.css" />
   </head>
@@ -25,7 +45,9 @@
     </header>
     <main class="wrap">
       <h1>Favorites</h1>
-      <noscript><p class="muted">Favorites need JavaScript to load.</p></noscript>
+      <noscript
+        ><p class="muted">Favorites need JavaScript to load.</p></noscript
+      >
       <div class="tabs" id="tabs" role="group" aria-label="Filter" hidden>
         <button data-f="all" aria-pressed="true">All</button
         ><button data-f="reading" aria-pressed="false">Reading</button
@@ -44,10 +66,7 @@
       <div class="wrap">
         <div>
           <a class="brand" href="index.html">3NDING</a>
-          <p>
-            A quiet place to read. Your favorites and reading progress are saved
-            on this device only.
-          </p>
+          <p>A quiet place to read.</p>
         </div>
         <nav aria-label="Footer">
           <a href="index.html">Library</a><a href="favorites.html">Favorites</a
