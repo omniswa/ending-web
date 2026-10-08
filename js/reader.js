@@ -35,16 +35,12 @@ const SKELETON =
   '<div class="skl" aria-hidden="true"><i class="h"></i>' +
   "<i></i>".repeat(10) +
   "</div>";
-// Resolve on the next frame, but never hang in a background tab (where
-// requestAnimationFrame is paused) - read-aloud keeps advancing chapters there.
 const nextFrame = () =>
   new Promise((res) => {
     if (document.hidden) return res();
     requestAnimationFrame(() => res());
     setTimeout(res, 150);
   });
-// Web fonts arriving late reflow the page, which would make a restored scroll
-// position (and the progress saved from it) land in the wrong place.
 const fontsReady = () =>
   document.fonts && document.fonts.status === "loading"
     ? Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1200))])
@@ -256,9 +252,6 @@ async function open(i, r = 0, keepTts = false) {
   chapter = Math.max(0, Math.min(i, manifest.chapters.length - 1));
   const c = manifest.chapters[chapter];
   $("#page").setAttribute("aria-busy", "true");
-  // Chapters are already in memory, so when one is on screen keep showing it and
-  // only fall back to the skeleton if loading drags on. Flashing a skeleton for a
-  // few milliseconds on every page turn just looks like flicker.
   let skTimer = 0;
   const showSkeleton = () => {
     if (my === token) $("#page").innerHTML = SKELETON;
@@ -292,8 +285,6 @@ async function open(i, r = 0, keepTts = false) {
   $("#chapters").value = chapter;
   $("#prev").disabled = chapter === 0;
   updateNext();
-  // Restore the scroll position only once layout (and web fonts) have settled,
-  // and resolve only after that, so callers like read-aloud start at the right place.
   await nextFrame();
   if (ok) await fontsReady();
   if (my !== token) return;
@@ -330,7 +321,6 @@ async function init() {
     manifest = JSON.parse(await read("manifest.json"));
     if (!manifest || !Array.isArray(manifest.chapters))
       throw new Error("This book has no chapters");
-    // Drop malformed entries and make sure every chapter has a usable title.
     manifest.chapters = manifest.chapters
       .filter((c) => c && typeof c.file === "string" && c.file)
       .map((c, i) => ({ file: c.file, title: String(c.title || `Chapter ${i + 1}`) }));
@@ -497,8 +487,6 @@ $("#next").addEventListener("click", () => {
   if (favs()[book.id]?.done) return (location.href = "index.html");
   const f = favs(),
     e = f[book.id];
-  // Finishing a book must not silently add it to Favorites: keep the entry's
-  // favorite state if it has one, otherwise record it as finished-only.
   f[book.id] = e ? { ...e, done: true } : { at: Date.now(), done: true, fav: false };
   store.write("favs", f);
   toast("Marked as finished");

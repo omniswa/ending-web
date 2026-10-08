@@ -139,9 +139,6 @@ $("#recentMore").addEventListener("click", () => {
   state.allRecent = !state.allRecent;
   renderRecent();
 });
-// Loading state. The library is empty until books.json arrives, so show
-// placeholders shaped like the real content (including the "Continue reading"
-// row, which is known from localStorage) to keep the page from jumping.
 const pendingRecent = () => {
   const done = favs();
   return Object.entries(obj("progress")).filter(

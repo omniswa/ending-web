@@ -17,8 +17,6 @@ function wrap(ctx, text, max) {
   for (const w of text.split(" ")) {
     if (ctx.measureText(w).width <= max) push(w, " ");
     else {
-      // A "word" wider than the card (a long token, or text written without
-      // spaces): break it character by character instead of overflowing.
       if (cur) {
         lines.push(cur);
         cur = "";

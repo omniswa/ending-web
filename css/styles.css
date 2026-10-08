@@ -8,8 +8,6 @@
   --accent: #0f6b61;
   --on-accent: #fff;
   --shadow: 0 1px 2px #0001, 0 12px 28px -16px #0004;
-  /* Skeleton colors are derived from the active theme's text/background, so
-     they stay visible in light, dark, sepia and OLED alike. */
   --sk: color-mix(in srgb, var(--text) 11%, var(--bg));
   --sk-hi: color-mix(in srgb, var(--text) 19%, var(--bg));
   --ui: "Instrument Sans", system-ui, sans-serif;
@@ -167,6 +165,7 @@ nav a[aria-current] {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface);
+  font-size: 0.85rem;
 }
 .tools input {
   flex: 1 1 0;
@@ -426,8 +425,6 @@ nav a[aria-current] {
   position: fixed;
   left: 50%;
   bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
-  /* Parked fully below the viewport and transparent. (Moving it by only 200% of
-     its own height left an empty toast peeking in at the bottom of every page.) */
   transform: translate(-50%, calc(100% + 3rem));
   opacity: 0;
   background: var(--text);
@@ -440,6 +437,7 @@ nav a[aria-current] {
   z-index: 30;
   max-width: 90vw;
   pointer-events: none;
+  text-align: center;
 }
 .toast.on {
   transform: translate(-50%, 0);
@@ -516,7 +514,6 @@ nav a[aria-current] {
 }
 .chnav {
   max-width: 65ch;
-  /* `ch` depends on the font: match .page so the buttons line up with the text column */
   font-family: var(--font);
   font-size: var(--size);
   display: flex;
@@ -652,7 +649,6 @@ nav a[aria-current] {
   height: 1rem;
   margin-top: 1rem;
 }
-/* child 1 is the chapter-title bar; 5, 9 are the short last lines of a paragraph */
 .skl i:nth-child(4n + 1) {
   width: 70%;
   margin-bottom: 1.4rem;
@@ -675,7 +671,6 @@ nav a[aria-current] {
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
 }
-/* Covers whose image has not arrived yet get the same shimmer on top of the title placeholder. */
 .card:not(.sk) .cover:not(.loaded):not(.nocover)::after {
   content: "";
   position: absolute;
@@ -874,7 +869,7 @@ nav a[aria-current] {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: end;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -924,7 +919,13 @@ nav a[aria-current] {
     display: none;
   }
   .stats {
-    padding: 1rem;
+    margin: 1rem 0;
+  }
+  .st-data {
+    justify-content: center;
+  }
+  .toast {
+    width: min(50vw, 100%);
   }
 }
 

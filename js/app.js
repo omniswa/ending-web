@@ -5,8 +5,7 @@ const ICONS = {
     '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/>',
   share:
     '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
-  check:
-    '<circle cx="12" cy="12" r="10"/><path d="m7.5 12 3 3 6-6" fill="none" stroke="white" stroke-width="2"/>',
+  check: '<path d="m4.5 12.5 5 5L19.5 7.5l-2-2-8 8-3-3z"/>',
   back: '<path d="M19 12H5m7-7-7 7 7 7"/>',
   full: '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>',
 };
@@ -53,8 +52,6 @@ export const obj = (k) => {
   return v && typeof v === "object" && !Array.isArray(v) ? v : {};
 };
 
-// fetch() with a timeout, so a stalled request ends in an error message
-// instead of leaving a skeleton on screen forever.
 export async function fetchTimeout(url, opts = {}, ms = 20000) {
   try {
     return await fetch(url, {
@@ -106,15 +103,11 @@ export const loadBooks = () =>
       throw e;
     }));
 
-// "favs" holds one entry per book that is favorited and/or finished.
-// `fav: false` marks a finished book that is NOT a favorite. Entries without
-// the flag (including all data saved by older versions) count as favorites.
 export const favs = () => obj("favs");
 export const isFav = (f, id) => !!f[id] && f[id].fav !== false;
 export function toggleFav(id) {
   const f = favs();
   if (isFav(f, id)) {
-    // Un-favoriting a finished book must not wipe its finished state.
     if (f[id].done) f[id] = { ...f[id], fav: false };
     else delete f[id];
   } else {

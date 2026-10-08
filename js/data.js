@@ -100,11 +100,9 @@ export function importData(text) {
   }
   if (GOALS.includes(+d.goal)) save("goal", +d.goal);
   if (isObj(d.reader)) {
-    // Keep only known settings with primitive values (reader.js validates the rest).
     const r = {};
     for (const k of ["font", "theme", "size", "align", "lh", "rate"])
-      if (["string", "number"].includes(typeof d.reader[k]))
-        r[k] = d.reader[k];
+      if (["string", "number"].includes(typeof d.reader[k])) r[k] = d.reader[k];
     save("reader", r);
   }
   if (Array.isArray(d.highlights)) {
