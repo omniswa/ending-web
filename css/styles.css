@@ -8,6 +8,10 @@
   --accent: #0f6b61;
   --on-accent: #fff;
   --shadow: 0 1px 2px #0001, 0 12px 28px -16px #0004;
+  /* Skeleton colors are derived from the active theme's text/background, so
+     they stay visible in light, dark, sepia and OLED alike. */
+  --sk: color-mix(in srgb, var(--text) 11%, var(--bg));
+  --sk-hi: color-mix(in srgb, var(--text) 19%, var(--bg));
   --ui: "Instrument Sans", system-ui, sans-serif;
   --serif: "Newsreader", Georgia, serif;
   --font: var(--serif);
@@ -422,18 +426,24 @@ nav a[aria-current] {
   position: fixed;
   left: 50%;
   bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
-  transform: translate(-50%, 200%);
+  /* Parked fully below the viewport and transparent. (Moving it by only 200% of
+     its own height left an empty toast peeking in at the bottom of every page.) */
+  transform: translate(-50%, calc(100% + 3rem));
+  opacity: 0;
   background: var(--text);
   color: var(--bg);
   padding: 0.6rem 1.1rem;
   border-radius: 10px;
-  transition: transform 0.25s;
+  transition:
+    transform 0.25s,
+    opacity 0.25s;
   z-index: 30;
   max-width: 90vw;
   pointer-events: none;
 }
 .toast.on {
   transform: translate(-50%, 0);
+  opacity: 1;
 }
 .bar {
   gap: 0.5rem !important;
@@ -506,12 +516,17 @@ nav a[aria-current] {
 }
 .chnav {
   max-width: 65ch;
+  /* `ch` depends on the font: match .page so the buttons line up with the text column */
+  font-family: var(--font);
+  font-size: var(--size);
   display: flex;
   gap: 0.6rem;
   padding-bottom: 2.5rem;
 }
 .chnav .btn {
   flex: 1;
+  font-family: var(--ui);
+  font-size: 1rem;
 }
 .panel {
   position: fixed;
@@ -629,7 +644,6 @@ nav a[aria-current] {
   height: 0.8rem;
   margin-top: 0.6rem;
   border-radius: 6px;
-  background: var(--line);
 }
 .sk i:last-child {
   width: 60%;
@@ -638,18 +652,50 @@ nav a[aria-current] {
   height: 1rem;
   margin-top: 1rem;
 }
-.skl i:nth-child(4n) {
+/* child 1 is the chapter-title bar; 5, 9 are the short last lines of a paragraph */
+.skl i:nth-child(4n + 1) {
   width: 70%;
   margin-bottom: 1.4rem;
+}
+.skl i.h {
+  width: 55%;
+  height: 1.8rem;
+  margin: 0 0 1.8rem;
 }
 .sk .cover,
 .sk i,
 .skl i {
-  animation: pulse 1.4s ease-in-out infinite;
+  background-color: var(--sk);
+  background-image: linear-gradient(
+    90deg,
+    transparent 25%,
+    var(--sk-hi) 37%,
+    transparent 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
 }
-@keyframes pulse {
-  50% {
-    opacity: 0.45;
+/* Covers whose image has not arrived yet get the same shimmer on top of the title placeholder. */
+.card:not(.sk) .cover:not(.loaded):not(.nocover)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 25%,
+    color-mix(in srgb, var(--text) 10%, transparent) 37%,
+    transparent 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  pointer-events: none;
+}
+@keyframes shimmer {
+  from {
+    background-position: 100% 50%;
+  }
+  to {
+    background-position: 0 50%;
   }
 }
 .recent-grid {
@@ -849,7 +895,8 @@ nav a[aria-current] {
   }
   .sk .cover,
   .sk i,
-  .skl i {
+  .skl i,
+  .card:not(.sk) .cover:not(.loaded):not(.nocover)::after {
     animation: none;
   }
 }
