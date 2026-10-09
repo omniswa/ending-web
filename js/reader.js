@@ -1,6 +1,6 @@
 import {
   loadBooks,
-  fetchTimeout,
+  fetchBody,
   store,
   obj,
   favs,
@@ -318,10 +318,14 @@ async function init() {
   try {
     const id = new URLSearchParams(location.search).get("id");
     book = (await loadBooks()).find((b) => b.id === id);
+    // Saved list may predate this book; check the live one before giving up.
+    if (!book) book = (await loadBooks({ fresh: true })).find((b) => b.id === id);
     if (!book) throw new Error("Book not found");
-    const res = await fetchTimeout(book.zip, {}, 60000);
-    if (!res.ok) throw new Error("Could not download this book");
-    read = await readZip(await res.arrayBuffer());
+    const buf = await fetchBody(book.zip, (r) => r.arrayBuffer(), {
+      ms: 60000,
+      fail: "Could not download this book",
+    });
+    read = await readZip(buf);
     manifest = JSON.parse(await read("manifest.json"));
     if (!manifest || !Array.isArray(manifest.chapters))
       throw new Error("This book has no chapters");

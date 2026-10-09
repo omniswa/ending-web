@@ -52,56 +52,141 @@ export const obj = (k) => {
   return v && typeof v === "object" && !Array.isArray(v) ? v : {};
 };
 
-export async function fetchTimeout(url, opts = {}, ms = 20000) {
-  try {
-    return await fetch(url, {
-      ...opts,
-      signal: AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined,
-    });
-  } catch (e) {
-    if (e?.name === "TimeoutError") throw new Error("This is taking too long");
-    if (e instanceof TypeError) throw new Error("You seem to be offline");
-    throw e;
+/* ---------- network ---------- */
+// Friendly messages for the failures people can actually act on.
+const friendly = (e) => {
+  if (e?.name === "TimeoutError") return new Error("This is taking too long");
+  if (e instanceof TypeError) return new Error("You seem to be offline");
+  return e;
+};
+const transient = (e) =>
+  e?.name === "TimeoutError" || e instanceof TypeError || e?.retry === true;
+
+// Fetches `url` and reads the body with `read(res)` inside the same timeout
+// window, so a stall while the body is downloading is reported like a stalled
+// request instead of leaking a raw DOMException. Retries once on timeouts,
+// network errors and 408/429/5xx responses.
+export async function fetchBody(
+  url,
+  read,
+  { opts = {}, ms = 20000, fail = "Request failed", retries = 1 } = {},
+) {
+  for (let i = 0; ; i++) {
+    try {
+      const res = await fetch(url, {
+        ...opts,
+        signal: AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined,
+      });
+      if (!res.ok)
+        throw Object.assign(new Error(fail), {
+          retry: res.status >= 500 || res.status === 408 || res.status === 429,
+        });
+      return await read(res);
+    } catch (e) {
+      if (i < retries && transient(e)) {
+        await new Promise((r) => setTimeout(r, 400));
+        continue;
+      }
+      throw friendly(e);
+    }
   }
 }
 
-let booksPromise;
-export const loadBooks = () =>
-  (booksPromise ??= fetchTimeout("books.json", { cache: "no-cache" })
-    .then((r) => {
-      if (!r.ok) throw new Error("Could not load the library");
-      return r.json();
-    })
-    .then((list) => {
-      if (!Array.isArray(list)) throw new Error("The library data is invalid");
-      const seen = new Set();
-      return list
-        .filter(
-          (b) =>
-            b &&
-            typeof b.id === "string" &&
-            b.id &&
-            !seen.has(b.id) &&
-            seen.add(b.id),
-        )
-        .map((b) => {
-          const title = String(b.title ?? "Untitled"),
-            author = String(b.author ?? "Unknown");
-          return {
-            ...b,
-            title,
-            author,
-            added: String(b.added ?? ""),
-            cover: b.cover ? String(b.cover) : "",
-            zip: b.zip ? String(b.zip) : `books/${b.id}.zip`,
-            _s: norm(`${title} ${author}`),
-          };
-        });
+/* ---------- library list (cached) ---------- */
+const CACHE_KEY = "3nding:books";
+const readCache = () => {
+  try {
+    const c = JSON.parse(localStorage.getItem(CACHE_KEY));
+    return Array.isArray(c?.list) && c.list.length ? c.list : null;
+  } catch {
+    return null;
+  }
+};
+// Silent on purpose: a full cache must not trigger the "could not save" toast.
+const writeCache = (list) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), list }));
+  } catch {}
+};
+const normalize = (list) => {
+  const seen = new Set();
+  return list
+    .filter(
+      (b) =>
+        b &&
+        typeof b.id === "string" &&
+        b.id &&
+        !seen.has(b.id) &&
+        seen.add(b.id),
+    )
+    .map((b) => {
+      const title = String(b.title ?? "Untitled"),
+        author = String(b.author ?? "Unknown");
+      return {
+        ...b,
+        title,
+        author,
+        added: String(b.added ?? ""),
+        cover: b.cover ? String(b.cover) : "",
+        zip: b.zip ? String(b.zip) : `books/${b.id}.zip`,
+        _s: norm(`${title} ${author}`),
+      };
+    });
+};
+
+let netPromise;
+const network = () =>
+  (netPromise ??= fetchBody(
+    "books.json",
+    async (r) => {
+      try {
+        return await r.json();
+      } catch (e) {
+        if (e instanceof SyntaxError)
+          throw new Error("The library data is invalid");
+        throw e;
+      }
+    },
+    {
+      opts: { cache: "no-cache" },
+      ms: 15000,
+      fail: "Could not load the library",
+    },
+  )
+    .then((raw) => {
+      if (!Array.isArray(raw)) throw new Error("The library data is invalid");
+      return { raw, books: normalize(raw) };
     })
     .catch((e) => {
-      booksPromise = null;
+      netPromise = null;
       throw e;
     }));
+
+// With a saved copy this resolves immediately and refreshes in the background;
+// `onFresh(books)` is called only if the library actually changed. Without one
+// it waits for the network. `fresh: true` skips the saved copy.
+export async function loadBooks({ onFresh, fresh = false } = {}) {
+  const cached = fresh ? null : readCache();
+  if (!cached) {
+    const { raw, books } = await network();
+    writeCache(raw);
+    return books;
+  }
+  const before = JSON.stringify(cached);
+  // Deferred so the caller's first render always lands before any update.
+  setTimeout(
+    () =>
+      network()
+        .then(({ raw, books }) => {
+          if (JSON.stringify(raw) === before) return;
+          writeCache(raw);
+          onFresh?.(books);
+        })
+        .catch(() => {}),
+    0,
+  );
+  return normalize(cached);
+}
 
 export const favs = () => obj("favs");
 export const isFav = (f, id) => !!f[id] && f[id].fav !== false;
@@ -193,13 +278,17 @@ export function card(b, { managed = false, row = false } = {}) {
 <div class="acts"><a class="btn primary" href="${href}"${pct === 100 ? ' data-act="again"' : ""}>${label}</a>${done}<button class="icon-btn" data-act="share" aria-label="Share: ${t}" title="Share">${icon("share")}</button></div></div></article>`;
 }
 
+// `books` may be an array or a function returning the current array, so the
+// handler keeps working after a background refresh swaps the list.
 export function bindCards(root, books, onChange) {
   root.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-act]");
     if (!btn) return;
     const cardEl = btn.closest(".card"),
       id = cardEl.dataset.id,
-      b = books.find((x) => x.id === id),
+      b = (typeof books === "function" ? books() : books).find(
+        (x) => x.id === id,
+      ),
       act = btn.dataset.act,
       index = [...root.querySelectorAll(".card")].indexOf(cardEl);
     if (act === "fav") {
@@ -241,11 +330,12 @@ export function bindCards(root, books, onChange) {
       `.card[data-id="${CSS.escape(id)}"] ${sel}`,
     );
     const cards = [...root.querySelectorAll(".card")];
-    (same ?? (cards[index] ?? cards[cards.length - 1])?.querySelector(sel))
-      ?.focus();
+    (
+      same ?? (cards[index] ?? cards[cards.length - 1])?.querySelector(sel)
+    )?.focus();
   });
 }
 export const showError = (el, e) => {
   el.removeAttribute("aria-busy");
-  el.innerHTML =`<div class="empty"><p>${esc(e.message || "Something went wrong")}. Check your connection and try again.</p><button class="btn primary" onclick="location.reload()">Try again</button></div>`;
+  el.innerHTML = `<div class="empty"><p>${esc(e.message || "Something went wrong")}. Check your connection and try again.</p><button class="btn primary" onclick="location.reload()">Try again</button></div>`;
 };

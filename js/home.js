@@ -165,12 +165,21 @@ const refresh = () => {
 };
 addEventListener("pageshow", (e) => e.persisted && refresh());
 addEventListener("storage", refresh);
-loadBooks()
+const setBooks = (b) => {
+  books = b;
+  byId = new Map(b.map((x) => [x.id, x]));
+  for (const k in sorted) delete sorted[k];
+};
+loadBooks({
+  onFresh: (b) => {
+    setBooks(b);
+    render();
+  },
+})
   .then((b) => {
-    books = b;
-    byId = new Map(b.map((x) => [x.id, x]));
-    bindCards($("#grid"), books, render);
-    bindCards($("#recentList"), books, render);
+    setBooks(b);
+    bindCards($("#grid"), () => books, render);
+    bindCards($("#recentList"), () => books, render);
     render();
   })
   .catch((e) => {
