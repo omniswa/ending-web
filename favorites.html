@@ -32,6 +32,7 @@
       crossorigin
     />
     <link rel="stylesheet" href="css/styles.css" />
+    <noscript><style>.sk{display:none}</style></noscript>
   </head>
   <body id="top">
     <header class="top">
@@ -54,7 +55,7 @@
         ><button data-f="reading" aria-pressed="false">Reading</button
         ><button data-f="done" aria-pressed="false">Finished</button>
       </div>
-      <div class="grid" id="grid"></div>
+      <div class="grid" id="grid" aria-busy="true"><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div></div>
       <div class="more">
         <button class="btn" id="more" hidden>Show more</button>
       </div>
