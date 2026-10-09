@@ -787,10 +787,6 @@ nav a[aria-current] {
   justify-content: space-between;
   align-items: center;
 }
-.hl-head h2 {
-  margin: 0;
-  font-size: 1.25rem;
-}
 #hlList {
   list-style: none;
   padding: 0;
@@ -960,6 +956,13 @@ nav a[aria-current] {
   }
   .foot nav {
     gap: 0.2rem 0.8rem;
+  }
+  .hl-in {
+    text-align: center;
+  }
+  .hl-act{
+    display: grid;
+    width: 100%;
   }
 }
 
