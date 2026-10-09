@@ -758,7 +758,8 @@ nav a[aria-current] {
   border-radius: 14px;
   box-shadow: var(--shadow);
 }
-#hl {
+#hl,
+#fv {
   width: min(560px, 100% - 2rem);
   max-height: 80dvh;
   padding: 0;
@@ -768,8 +769,13 @@ nav a[aria-current] {
   background: var(--surface);
   color: var(--text);
 }
-#hl::backdrop {
+#hl::backdrop,
+#fv::backdrop {
   background: #0008;
+}
+#fv h2 {
+  margin: 0;
+  font-size: 1.25rem;
 }
 .hl-in {
   padding: 1rem;

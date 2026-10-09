@@ -192,8 +192,11 @@ export function toggleFav(id) {
 export function setDone(id, done) {
   const f = favs();
   if (!f[id]) return;
-  if (!done && f[id].fav === false) delete f[id];
-  else f[id].done = done;
+  if (f[id].fav === false) {
+    // Legacy "finished but not a favorite" entry: it can only be cleared, never set.
+    if (done) return;
+    delete f[id];
+  } else f[id].done = done;
   store.write("favs", f);
 }
 export function resetProgress(id) {

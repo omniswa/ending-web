@@ -5,6 +5,7 @@ import {
   obj,
   favs,
   isFav,
+  toggleFav,
   icon,
   esc,
   toast,
@@ -87,7 +88,8 @@ $("#fs").insertAdjacentHTML(
 document.body.insertAdjacentHTML(
   "beforeend",
   `<div id="hlbar" hidden><button class="btn primary" data-a="save">Highlight</button><button class="btn" data-a="card">Share card</button></div>
-<dialog id="hl" aria-labelledby="hlT"><div class="hl-in"><div class="hl-head"><h2 id="hlT">Highlights</h2><button class="btn" data-a="close">Close</button></div><ul id="hlList"></ul></div></dialog>`,
+<dialog id="hl" aria-labelledby="hlT"><div class="hl-in"><div class="hl-head"><h2 id="hlT">Highlights</h2><button class="btn" data-a="close">Close</button></div><ul id="hlList"></ul></div></dialog>
+<dialog id="fv" aria-labelledby="fvT"><div class="hl-in"><h2 id="fvT">Progress is saved for favorites only</h2><p class="muted">Add this book to your favorites to keep your place, reading progress and finished status. Without it, you can still read, but you will start from the beginning next time.</p><div class="hl-act"><button class="btn primary" data-a="fav">Add to favorites</button><button class="btn" data-a="close">Continue without saving</button></div></div></dialog>`,
 );
 
 const highlights = () => {
@@ -193,7 +195,7 @@ function updateNext() {
   n.disabled = false;
   n.textContent = !isLast()
     ? "Next"
-    : favs()[book.id]?.done
+    : !isFav(favs(), book.id) || favs()[book.id]?.done
       ? "Back to library"
       : "Mark as finished";
 }
@@ -346,6 +348,7 @@ async function init() {
     $("#chapters").disabled = false;
     const p = obj("progress")[id];
     await open(p?.chapter ?? 0, p?.ratio ?? 0);
+    askFavorite();
   } catch (e) {
     book = manifest = null;
     $("#page").removeAttribute("aria-busy");
@@ -447,6 +450,21 @@ function renderHl() {
         .join("")
     : '<li class="muted">No highlights yet.</li>';
 }
+function askFavorite() {
+  if (book && !isFav(favs(), book.id) && !$("#fv").open) $("#fv").showModal();
+}
+$("#fv").addEventListener("click", (e) => {
+  if (e.target === $("#fv")) return $("#fv").close();
+  const a = e.target.closest("[data-a]")?.dataset.a;
+  if (!a) return;
+  if (a === "fav" && book && !isFav(favs(), book.id)) {
+    toggleFav(book.id);
+    toast("Added to favorites");
+    save();
+    updateNext();
+  }
+  $("#fv").close();
+});
 $("#hlBtn").addEventListener("click", () => {
   renderHl();
   $("#hl").showModal();
@@ -494,10 +512,10 @@ $("#chapters").addEventListener("change", (e) => open(+e.target.value));
 $("#prev").addEventListener("click", () => open(chapter - 1));
 $("#next").addEventListener("click", () => {
   if (!isLast()) return open(chapter + 1);
-  if (favs()[book.id]?.done) return (location.href = "index.html");
-  const f = favs(),
-    e = f[book.id];
-  f[book.id] = e ? { ...e, done: true } : { at: Date.now(), done: true, fav: false };
+  const f = favs();
+  // Only favorites can be finished; everything else just goes back.
+  if (!isFav(f, book.id) || f[book.id].done) return (location.href = "index.html");
+  f[book.id] = { ...f[book.id], done: true };
   store.write("favs", f);
   toast("Marked as finished");
   updateNext();
@@ -527,7 +545,8 @@ addEventListener("keydown", (e) => {
     return;
   if (
     e.target.closest?.("input, select, textarea, [contenteditable]") ||
-    $("#hl").open
+    $("#hl").open ||
+    $("#fv").open
   )
     return;
   if (e.key === "ArrowLeft" && chapter > 0) {
