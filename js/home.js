@@ -151,7 +151,7 @@ const pendingRecent = () => {
 };
 $("#count").textContent = "Loading library…";
 $("#grid").setAttribute("aria-busy", "true");
-$("#grid").innerHTML = skeleton(12);
+if (!$("#grid").querySelector(".sk")) $("#grid").innerHTML = skeleton(12);
 const nRecent = Math.min(RECENT, pendingRecent());
 if (nRecent) {
   $("#recent").hidden = false;

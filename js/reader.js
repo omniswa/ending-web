@@ -257,7 +257,8 @@ async function open(i, r = 0, keepTts = false) {
   $("#page").setAttribute("aria-busy", "true");
   let skTimer = 0;
   const showSkeleton = () => {
-    if (my === token) $("#page").innerHTML = SKELETON;
+    if (my === token && !$("#page").querySelector(".skl"))
+      $("#page").innerHTML = SKELETON;
   };
   if ($("#page").querySelector(":scope > p, :scope > h2"))
     skTimer = setTimeout(showSkeleton, 150);
@@ -313,7 +314,7 @@ async function init() {
   $("#chapters").disabled = true;
   $("#chapters").innerHTML = "<option>Chapters</option>";
   $("#page").setAttribute("aria-busy", "true");
-  $("#page").innerHTML = SKELETON;
+  if (!$("#page").querySelector(".skl")) $("#page").innerHTML = SKELETON;
   try {
     const id = new URLSearchParams(location.search).get("id");
     book = (await loadBooks()).find((b) => b.id === id);

@@ -10,10 +10,13 @@ import {
 import { exportData, importData } from "./data.js";
 
 export function mountStats(main, onImport = () => {}) {
-  const el = document.createElement("section");
-  el.className = "stats";
-  el.setAttribute("aria-label", "Reading goal and backup");
-  main.prepend(el);
+  let el = main.querySelector("#stats");
+  if (!el) {
+    el = document.createElement("section");
+    el.className = "stats";
+    el.setAttribute("aria-label", "Reading goal and backup");
+    main.prepend(el);
+  }
 
   function render(focusGoal) {
     const g = getGoal(),

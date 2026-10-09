@@ -64,7 +64,7 @@ $("#tabs").addEventListener("click", (e) => {
   render();
 });
 $("#grid").setAttribute("aria-busy", "true");
-$("#grid").innerHTML = skeleton(6);
+if (!$("#grid").querySelector(".sk")) $("#grid").innerHTML = skeleton(6);
 const refresh = () => books.length && render();
 addEventListener("pageshow", (e) => e.persisted && refresh());
 addEventListener("storage", refresh);

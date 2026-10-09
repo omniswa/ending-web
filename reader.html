@@ -32,6 +32,7 @@
       crossorigin
     />
     <link rel="stylesheet" href="css/styles.css" />
+    <noscript><style>.skl{display:none}</style></noscript>
 
     <script>
       try {
@@ -78,7 +79,7 @@
     ></section>
     <main>
       <!-- No aria-live here: it would make screen readers read whole chapters aloud. -->
-      <article class="page" id="page"></article>
+      <article class="page" id="page" aria-busy="true"><div class="skl" aria-hidden="true"><i class="h"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
       <div class="wrap chnav">
         <button class="btn" id="prev" disabled>Previous</button
         ><button class="btn primary" id="next" disabled>Next</button>

@@ -32,6 +32,7 @@
       crossorigin
     />
     <link rel="stylesheet" href="css/styles.css" />
+    <noscript><style>.sk,.stats:empty{display:none}</style></noscript>
   </head>
   <body id="top">
     <header class="top">
@@ -45,6 +46,7 @@
       </div>
     </header>
     <main class="wrap">
+      <section class="stats" id="stats" aria-label="Reading goal and backup"></section>
       <noscript
         ><p class="muted">The library needs JavaScript to load.</p></noscript
       >
@@ -81,8 +83,8 @@
             <option value="az">Author Z–A</option>
           </select>
         </div>
-        <p class="count" id="count" aria-live="polite"></p>
-        <div class="grid" id="grid"></div>
+        <p class="count" id="count" aria-live="polite">Loading library…</p>
+        <div class="grid" id="grid" aria-busy="true"><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div><div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div></div>
         <nav class="pager" id="pager" aria-label="Pagination"></nav>
       </section>
     </main>
