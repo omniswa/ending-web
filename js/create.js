@@ -22,6 +22,8 @@ const paras = (t) =>
     .filter(Boolean);
 const words = (t) => (t.trim() ? t.trim().split(/\s+/).length : 0);
 const s = (v, n) => String(v ?? "").slice(0, n);
+const plural = (n, one, many = one + "s") => `${n.toLocaleString()} ${n === 1 ? one : many}`;
+const wide = matchMedia("(min-width: 860px)");
 
 const chapter = (title = "", text = "") => ({ id: uid(), title, text });
 const blank = () => ({
@@ -67,14 +69,27 @@ let doc = drafts.find((d) => d.id === store.read("draftCur", "")) || drafts[0],
 const label = (d) => d.title.trim() || "Untitled";
 const chLabel = (c, i) => c.title.trim() || `Chapter ${i + 1}`;
 
+/* ---------- saving ---------- */
+const STATE = {
+  saved: "Saved on this device",
+  saving: "Saving…",
+  error: "Not saved – storage unavailable",
+};
+function setSave(k) {
+  const el = $("#saveState");
+  el.dataset.s = k;
+  el.textContent = STATE[k];
+}
 function persist() {
   clearTimeout(saveTimer);
   doc.at = Date.now();
-  store.write("drafts", drafts);
-  store.write("draftCur", doc.id);
+  const ok = store.write("drafts", drafts) && store.write("draftCur", doc.id);
+  setSave(ok ? "saved" : "error");
+  return ok;
 }
 function queueSave() {
   clearTimeout(saveTimer);
+  setSave("saving");
   saveTimer = setTimeout(persist, 400);
 }
 
@@ -87,26 +102,48 @@ function renderNb() {
     )
     .join("");
 }
+function renderBookSum() {
+  const a = doc.author.trim();
+  $("#bookSum").textContent = doc.title.trim()
+    ? doc.title.trim() + (a ? ` · ${a}` : "")
+    : "Add a title and author";
+}
 function renderMeta() {
   $("#mTitle").value = doc.title;
   $("#mAuthor").value = doc.author;
   $("#mLang").value = doc.lang;
+  $("#bookDet").open = !doc.title.trim() || !doc.author.trim();
+  renderBookSum();
 }
 function renderList(focus) {
-  $("#chList").innerHTML = doc.chapters
+  const ul = $("#chList");
+  ul.innerHTML = doc.chapters
     .map((c, i) => {
       const n = chLabel(c, i);
-      return `<li data-i="${i}"${i === doc.cur ? ' class="on"' : ""}><button class="go" data-a="go"${i === doc.cur ? ' aria-current="true"' : ""}><span>${i + 1}. ${esc(n)}</span><small>${words(c.text).toLocaleString()} w</small></button><button class="mv" data-a="up" aria-label="Move up: ${esc(n)}"${i === 0 ? " disabled" : ""}>↑</button><button class="mv" data-a="down" aria-label="Move down: ${esc(n)}"${i === doc.chapters.length - 1 ? " disabled" : ""}>↓</button><button class="mv" data-a="del" aria-label="Delete: ${esc(n)}">×</button></li>`;
+      return `<li data-i="${i}"${i === doc.cur ? ' class="on"' : ""}><button class="go" data-a="go"${i === doc.cur ? ' aria-current="true"' : ""}><span>${i + 1}. ${esc(n)}</span><small>${words(c.text).toLocaleString()} w</small></button><button class="mv" data-a="up" title="Move up" aria-label="Move up: ${esc(n)}"${i === 0 ? " disabled" : ""}>↑</button><button class="mv" data-a="down" title="Move down" aria-label="Move down: ${esc(n)}"${i === doc.chapters.length - 1 ? " disabled" : ""}>↓</button><button class="mv" data-a="del" title="Delete chapter" aria-label="Delete: ${esc(n)}">×</button></li>`;
     })
     .join("");
-  if (focus)
-    $(`#chList [data-i="${focus.i}"] [data-a="${focus.a}"]`)?.focus();
+  $("#chCount").textContent = `Editing ${doc.cur + 1} of ${doc.chapters.length}`;
+  const on = ul.querySelector("li.on");
+  if (on) {
+    if (on.offsetTop < ul.scrollTop) ul.scrollTop = on.offsetTop;
+    else if (on.offsetTop + on.offsetHeight > ul.scrollTop + ul.clientHeight)
+      ul.scrollTop = on.offsetTop + on.offsetHeight - ul.clientHeight;
+  }
+  if (focus) $(`#chList [data-i="${focus.i}"] [data-a="${focus.a}"]`)?.focus();
+}
+function grow() {
+  const b = $("#body");
+  if (b.hidden) return;
+  b.style.height = "auto";
+  b.style.height = b.scrollHeight + "px";
 }
 function renderEditor() {
   const c = doc.chapters[doc.cur];
   $("#chTitle").value = c.title;
   $("#chTitle").placeholder = `Chapter ${doc.cur + 1}`;
   $("#body").value = c.text;
+  grow();
   renderPreview();
   renderStat();
 }
@@ -122,8 +159,8 @@ function renderStat() {
   const c = doc.chapters[doc.cur],
     w = words(c.text),
     total = doc.chapters.reduce((n, x) => n + words(x.text), 0);
-  $("#stat").textContent =
-    `${w.toLocaleString()} words · ${Math.max(1, Math.round(w / 230))} min read · book total ${total.toLocaleString()}`;
+  $("#stat").innerHTML =
+    `<span>${plural(w, "word")} · ${Math.max(1, Math.round(w / 230))} min read</span><span>Book: ${plural(total, "word")}</span>`;
 }
 function problems() {
   const bad = [],
@@ -135,7 +172,7 @@ function problems() {
   if (!LANG_RE.test(doc.lang.trim())) bad.push("Language code looks invalid (try “en”).");
   const filled = doc.chapters.filter((c) => c.text.trim());
   if (!filled.length) bad.push("Write at least one chapter.");
-  else ok.push(`${filled.length} chapter${filled.length === 1 ? "" : "s"} ready.`);
+  else ok.push(`${plural(filled.length, "chapter")} ready.`);
   const empty = doc.chapters.length - filled.length;
   if (filled.length && empty)
     warn.push(`${empty} empty chapter${empty === 1 ? " is" : "s are"} left out of the zip.`);
@@ -144,9 +181,9 @@ function problems() {
 function renderCheck() {
   const { bad, warn, ok } = problems();
   $("#chk").innerHTML = [
-    ...bad.map((m) => `<li class="bad"><b aria-hidden="true">✕</b> ${esc(m)}</li>`),
-    ...warn.map((m) => `<li class="warn"><b aria-hidden="true">!</b> ${esc(m)}</li>`),
-    ...(bad.length ? [] : ok.map((m) => `<li class="ok"><b aria-hidden="true">✓</b> ${esc(m)}</li>`)),
+    ...bad.map((m) => `<li class="bad"><b aria-hidden="true">✕</b><span>${esc(m)}</span></li>`),
+    ...warn.map((m) => `<li class="warn"><b aria-hidden="true">!</b><span>${esc(m)}</span></li>`),
+    ...(bad.length ? [] : ok.map((m) => `<li class="ok"><b aria-hidden="true">✓</b><span>${esc(m)}</span></li>`)),
   ].join("");
   $("#dl").disabled = !!bad.length;
   $("#share").disabled = !!bad.length;
@@ -164,6 +201,7 @@ $("#mTitle").addEventListener("input", (e) => {
   doc.title = e.target.value;
   queueSave();
   renderCheck();
+  renderBookSum();
   const o = $(`#nb option[value="${CSS.escape(doc.id)}"]`);
   if (o) o.textContent = label(doc);
 });
@@ -171,6 +209,7 @@ $("#mAuthor").addEventListener("input", (e) => {
   doc.author = e.target.value;
   queueSave();
   renderCheck();
+  renderBookSum();
 });
 $("#mLang").addEventListener("input", (e) => {
   doc.lang = e.target.value.trim();
@@ -183,14 +222,24 @@ $("#chTitle").addEventListener("input", (e) => {
   renderList();
   renderPreview();
 });
+$("#chTitle").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.isComposing) {
+    e.preventDefault();
+    if (preview) setMode(false);
+    $("#body").focus();
+  }
+});
 $("#body").addEventListener("input", (e) => {
   doc.chapters[doc.cur].text = e.target.value;
   queueSave();
+  grow();
   renderStat();
   renderCheck();
   const w = $(`#chList [data-i="${doc.cur}"] small`);
   if (w) w.textContent = words(e.target.value).toLocaleString() + " w";
 });
+addEventListener("resize", grow);
+document.fonts?.ready.then(grow);
 
 function select(i) {
   doc.cur = i;
@@ -206,7 +255,8 @@ $("#chList").addEventListener("click", (e) => {
     cs = doc.chapters;
   if (a === "go") {
     select(i);
-    if (!preview) $("#body").focus();
+    if (!wide.matches) $("#chDet").open = false;
+    if (!preview) $("#body").focus({ preventScroll: wide.matches });
   } else if (a === "up" || a === "down") {
     const j = a === "up" ? i - 1 : i + 1;
     if (j < 0 || j >= cs.length) return;
@@ -237,8 +287,19 @@ $("#chAdd").addEventListener("click", () => {
   renderList();
   renderEditor();
   renderCheck();
+  if (preview) setMode(false);
+  if (!wide.matches) $("#chDet").open = false;
   $("#chTitle").focus();
 });
+
+// On wide screens the chapter list is always open; on phones it collapses
+// so the writing area stays in view.
+function syncDet() {
+  if (wide.matches) $("#chDet").open = true;
+}
+$("#chDet").open = wide.matches;
+$("#chDet").addEventListener("toggle", syncDet);
+wide.addEventListener?.("change", syncDet);
 
 function setMode(p) {
   preview = p;
@@ -247,6 +308,7 @@ function setMode(p) {
   $("#body").hidden = p;
   $("#prev").hidden = !p;
   renderPreview();
+  grow();
 }
 $("#modeEdit").addEventListener("click", () => setMode(false));
 $("#modePrev").addEventListener("click", () => setMode(true));
@@ -278,6 +340,17 @@ $("#nbDel").addEventListener("click", () => {
 });
 
 /* ---------- output ---------- */
+const pub = $("#pub");
+$("#pubBtn").addEventListener("click", () => {
+  persist();
+  renderCheck();
+  pub.showModal();
+});
+$("#pubClose").addEventListener("click", () => pub.close());
+pub.addEventListener("click", (e) => {
+  if (e.target === pub) pub.close();
+});
+
 async function build() {
   const { bad } = problems();
   if (bad.length) {
@@ -363,7 +436,8 @@ $("#imp").addEventListener("click", () => $("#impFile").click());
 $("#impFile").addEventListener("change", async (e) => {
   const files = [...e.target.files];
   e.target.value = "";
-  let added = 0;
+  let books = 0,
+    chapters = 0;
   for (const f of files) {
     try {
       if (f.size > MAX_FILE) throw new Error(`${f.name} is too large`);
@@ -383,23 +457,31 @@ $("#impFile").addEventListener("change", async (e) => {
         persist();
         drafts.push(d);
         doc = d;
-        added++;
+        books++;
       } else {
         const cs = splitText(f.name, await f.text());
         if (doc.chapters.length === 1 && !doc.chapters[0].text.trim() && !doc.chapters[0].title.trim())
           doc.chapters = [];
-        doc.chapters.push(...cs);
-        doc.cur = doc.chapters.length - cs.length;
-        added += cs.length;
+        const room = MAX_CHAPTERS - doc.chapters.length;
+        if (cs.length > room) toast("Some chapters were skipped (chapter limit)");
+        const add = cs.slice(0, Math.max(0, room));
+        if (!add.length) continue;
+        doc.chapters.push(...add);
+        doc.cur = doc.chapters.length - add.length;
+        chapters += add.length;
       }
     } catch (err) {
       toast(err.message || "Could not import that file");
     }
   }
-  if (added) {
+  if (books || chapters) {
     persist();
     renderAll();
-    toast("Imported");
+    toast(
+      books
+        ? `Imported ${plural(books, "book")} as a new notebook`
+        : `Imported ${plural(chapters, "chapter")}`,
+    );
   }
 });
 
@@ -418,6 +500,13 @@ $("#impFile").addEventListener("change", async (e) => {
   } catch {}
 })();
 
+/* ---------- shortcuts & lifecycle ---------- */
+addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "s") {
+    e.preventDefault();
+    if (persist()) toast("Saved on this device");
+  }
+});
 addEventListener("pagehide", persist);
 document.addEventListener("visibilitychange", () => document.hidden && persist());
 addEventListener("storage", (e) => {
