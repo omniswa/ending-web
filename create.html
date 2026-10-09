@@ -29,46 +29,61 @@
     <main class="wrap">
       <h1>Write</h1>
       <p class="lead">
-        Write a book chapter by chapter, or just keep notes. Everything is saved
-        on this device as you type. When a book is ready, bundle it into a zip
-        and send it to be added to the library.
+        Write a book chapter by chapter. Everything is saved on this device as
+        you type. When it’s ready, bundle it into a zip and send it to be added
+        to the library.
       </p>
       <noscript><p class="muted">The editor needs JavaScript.</p></noscript>
 
+      <div class="ed-top">
+        <div class="ed-nb">
+          <label class="sr" for="nb">Notebook</label>
+          <select id="nb" class="in"></select>
+        </div>
+        <div class="ed-acts">
+          <button class="btn" id="nbNew" title="Start a new notebook">New</button>
+          <button class="btn" id="nbDel" title="Delete this notebook">Delete</button>
+        </div>
+        <div class="ed-end">
+          <span class="ed-state" id="saveState" data-s="saved" role="status">Saved on this device</span>
+          <button class="btn primary" id="pubBtn" aria-haspopup="dialog">Bundle</button>
+        </div>
+      </div>
+
       <div class="ed">
         <aside class="ed-side" aria-label="Book and chapters">
-          <div class="fld-row">
-            <label for="nb">Notebook</label>
-            <select id="nb" class="in"></select>
-            <div class="ed-acts">
-              <button class="btn" id="nbNew">New</button>
-              <button class="btn" id="nbDel">Delete</button>
+          <details class="ed-det" id="bookDet">
+            <summary><span>Book details</span><small id="bookSum"></small></summary>
+            <div class="ed-fields">
+              <label class="fld-row">Book title
+                <input id="mTitle" class="in" type="text" maxlength="120" autocomplete="off" />
+              </label>
+              <label class="fld-row">Author
+                <input id="mAuthor" class="in" type="text" maxlength="120" autocomplete="name" />
+              </label>
+              <label class="fld-row">Language code
+                <input id="mLang" class="in" type="text" maxlength="12" list="langs" placeholder="en" autocomplete="off" spellcheck="false" />
+                <datalist id="langs">
+                  <option value="en"></option><option value="es"></option><option value="fr"></option>
+                  <option value="de"></option><option value="it"></option><option value="pt"></option>
+                  <option value="tl"></option><option value="ja"></option><option value="zh"></option>
+                  <option value="ko"></option><option value="ru"></option>
+                </datalist>
+              </label>
             </div>
-          </div>
-          <label class="fld-row">Book title
-            <input id="mTitle" class="in" type="text" maxlength="120" autocomplete="off" />
-          </label>
-          <label class="fld-row">Author
-            <input id="mAuthor" class="in" type="text" maxlength="120" autocomplete="name" />
-          </label>
-          <label class="fld-row">Language code
-            <input id="mLang" class="in" type="text" maxlength="12" list="langs" autocomplete="off" spellcheck="false" />
-            <datalist id="langs">
-              <option value="en"></option><option value="es"></option><option value="fr"></option>
-              <option value="de"></option><option value="it"></option><option value="pt"></option>
-              <option value="tl"></option><option value="ja"></option><option value="zh"></option>
-              <option value="ko"></option><option value="ru"></option>
-            </datalist>
-          </label>
-          <div class="fld-row">
-            <span id="chLbl">Chapters</span>
-            <ol class="chl" id="chList" aria-labelledby="chLbl"></ol>
-            <div class="ed-acts">
-              <button class="btn primary" id="chAdd">Add chapter</button>
-              <button class="btn" id="imp">Import</button>
-              <input id="impFile" type="file" accept=".zip,.txt,.md,.markdown" multiple hidden />
+          </details>
+
+          <details class="ed-det ed-chs" id="chDet" open>
+            <summary><span id="chLbl">Chapters</span><small id="chCount"></small></summary>
+            <div class="ed-fields">
+              <ol class="chl" id="chList" aria-labelledby="chLbl"></ol>
+              <div class="ed-acts">
+                <button class="btn primary" id="chAdd">Add chapter</button>
+                <button class="btn" id="imp" title="Import .zip, .txt or .md files">Import</button>
+                <input id="impFile" type="file" accept=".zip,.txt,.md,.markdown" multiple hidden />
+              </div>
             </div>
-          </div>
+          </details>
         </aside>
 
         <section class="ed-main" aria-label="Chapter editor">
@@ -80,27 +95,32 @@
             </div>
             <span class="ed-meta" id="stat" aria-live="polite"></span>
           </div>
-          <textarea id="body" class="in ed-text" aria-label="Chapter text" spellcheck="true"></textarea>
+          <textarea id="body" class="in ed-text" aria-label="Chapter text" spellcheck="true" placeholder="Start writing… Leave a blank line between paragraphs."></textarea>
           <article class="page ed-prev" id="prev" hidden></article>
-          <p class="ed-hint">Leave a blank line between paragraphs, it serves as a break.</p>
-        </section>
-
-        <section class="ed-out" aria-label="Bundle and send">
-          <h2>Bundle &amp; contribute</h2>
-          <ul class="chk" id="chk" aria-live="polite"></ul>
-          <div class="ed-acts">
-            <button class="btn primary" id="dl">Download .zip</button>
-            <button class="btn" id="share" hidden>Share .zip</button>
-            <button class="btn" id="md">Export .md</button>
-          </div>
-          <ol class="steps">
-            <li>Download the zip.</li>
-            <li id="sendStep">Send it to the library owner.</li>
-          </ol>
-          <div class="ed-acts" id="sendLinks"></div>
         </section>
       </div>
     </main>
+
+    <dialog id="pub" aria-labelledby="pubT">
+      <div class="pub-in">
+        <div class="pub-head">
+          <h2 id="pubT">Bundle &amp; contribute</h2>
+          <button class="btn" id="pubClose">Close</button>
+        </div>
+        <ul class="chk" id="chk" aria-live="polite"></ul>
+        <div class="ed-acts">
+          <button class="btn primary" id="dl">Download .zip</button>
+          <button class="btn" id="share" hidden>Share .zip</button>
+          <button class="btn" id="md">Export .md</button>
+        </div>
+        <ol class="steps">
+          <li>Download the zip.</li>
+          <li id="sendStep">Send it to the library owner.</li>
+        </ol>
+        <div class="ed-acts" id="sendLinks"></div>
+      </div>
+    </dialog>
+
     <footer class="foot">
       <div class="wrap">
         <div>
