@@ -14,9 +14,27 @@
     <link rel="modulepreload" href="js/zip.js" />
     <link rel="modulepreload" href="js/zipwrite.js" />
 
-    <link rel="preload" href="fonts/sans.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="fonts/serif.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="fonts/mono.woff2" as="font" type="font/woff2" crossorigin />
+    <link
+      rel="preload"
+      href="fonts/sans.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="fonts/serif.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="fonts/mono.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <link rel="stylesheet" href="css/styles.css" />
   </head>
   <body id="top">
@@ -24,8 +42,7 @@
       <div class="wrap">
         <a class="brand" href="index.html">3NDING</a>
         <nav aria-label="Main">
-          <a href="index.html">Library</a
-          ><a href="favorites.html">Favorites</a
+          <a href="index.html">Library</a><a href="favorites.html">Favorites</a
           ><a href="create.html" aria-current="page">Write</a>
         </nav>
       </div>
@@ -33,7 +50,7 @@
     <main class="wrap">
       <h1>Write</h1>
       <p class="lead">
-        Write a book chapter by chapter or keep a personal journal. You can save your work on this device and bundle it into a zip file to share or contribute to the library.
+        Write a book or keep a personal journal.
       </p>
       <noscript><p class="muted">The editor needs JavaScript.</p></noscript>
 
@@ -43,53 +60,115 @@
           <select id="nb" class="in"></select>
         </div>
         <div class="ed-acts">
-          <button class="btn" id="nbNew" title="Start a new notebook">New</button>
-          <button class="btn" id="nbDel" title="Delete this notebook">Delete</button>
+          <button class="btn" id="nbNew" title="Start a new notebook">
+            New
+          </button>
+          <button class="btn" id="nbDel" title="Delete this notebook">
+            Delete
+          </button>
         </div>
         <div class="ed-end">
-          <span class="ed-state" id="saveState" data-s="saved" role="status">Saved on this device</span>
-          <button class="btn primary" id="pubBtn" aria-haspopup="dialog">Bundle</button>
+          <span class="ed-state" id="saveState" data-s="saved" role="status"
+            >Saved on this device</span
+          >
+          <button class="btn primary" id="pubBtn" aria-haspopup="dialog">
+            Bundle
+          </button>
         </div>
       </div>
 
       <div class="ed">
         <aside class="ed-side" aria-label="Book and chapters">
           <details class="ed-det" id="bookDet">
-            <summary><span>Book details</span><small id="bookSum"></small></summary>
+            <summary>
+              <span>Book details</span><small id="bookSum"></small>
+            </summary>
             <div class="ed-fields">
-              <label class="fld-row">Book title
-                <input id="mTitle" class="in" type="text" maxlength="120" autocomplete="off" />
+              <label class="fld-row"
+                >Book title
+                <input
+                  id="mTitle"
+                  class="in"
+                  type="text"
+                  maxlength="120"
+                  autocomplete="off"
+                />
               </label>
-              <label class="fld-row">Author
-                <input id="mAuthor" class="in" type="text" maxlength="120" autocomplete="name" />
+              <label class="fld-row"
+                >Author
+                <input
+                  id="mAuthor"
+                  class="in"
+                  type="text"
+                  maxlength="120"
+                  autocomplete="name"
+                />
               </label>
-              <label class="fld-row">Language code
-                <input id="mLang" class="in" type="text" maxlength="12" list="langs" placeholder="en" autocomplete="off" spellcheck="false" />
+              <label class="fld-row"
+                >Language code
+                <input
+                  id="mLang"
+                  class="in"
+                  type="text"
+                  maxlength="12"
+                  list="langs"
+                  placeholder="en"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
                 <datalist id="langs">
-                  <option value="en"></option><option value="es"></option><option value="fr"></option>
-                  <option value="de"></option><option value="it"></option><option value="pt"></option>
-                  <option value="tl"></option><option value="ja"></option><option value="zh"></option>
-                  <option value="ko"></option><option value="ru"></option>
+                  <option value="en"></option>
+                  <option value="es"></option>
+                  <option value="fr"></option>
+                  <option value="de"></option>
+                  <option value="it"></option>
+                  <option value="pt"></option>
+                  <option value="tl"></option>
+                  <option value="ja"></option>
+                  <option value="zh"></option>
+                  <option value="ko"></option>
+                  <option value="ru"></option>
                 </datalist>
               </label>
             </div>
           </details>
 
           <details class="ed-det ed-chs" id="chDet" open>
-            <summary><span id="chLbl">Chapters</span><small id="chCount"></small></summary>
+            <summary>
+              <span id="chLbl">Chapters</span><small id="chCount"></small>
+            </summary>
             <div class="ed-fields">
               <ol class="chl" id="chList" aria-labelledby="chLbl"></ol>
               <div class="ed-acts">
                 <button class="btn primary" id="chAdd">Add chapter</button>
-                <button class="btn" id="imp" title="Import .zip, .txt or .md files">Import</button>
-                <input id="impFile" type="file" accept=".zip,.txt,.md,.markdown" multiple hidden />
+                <button
+                  class="btn"
+                  id="imp"
+                  title="Import .zip, .txt or .md files"
+                >
+                  Import
+                </button>
+                <input
+                  id="impFile"
+                  type="file"
+                  accept=".zip,.txt,.md,.markdown"
+                  multiple
+                  hidden
+                />
               </div>
             </div>
           </details>
         </aside>
 
         <section class="ed-main" aria-label="Chapter editor">
-          <input id="chTitle" class="in ed-title" type="text" maxlength="120" aria-label="Chapter title" autocomplete="off" />
+          <input
+            id="chTitle"
+            class="in ed-title"
+            type="text"
+            maxlength="120"
+            aria-label="Chapter title"
+            autocomplete="off"
+          />
           <div class="ed-bar">
             <div class="seg" role="group" aria-label="Mode">
               <button id="modeEdit" aria-pressed="true">Write</button>
@@ -97,7 +176,13 @@
             </div>
             <span class="ed-meta" id="stat" aria-live="polite"></span>
           </div>
-          <textarea id="body" class="in ed-text" aria-label="Chapter text" spellcheck="true" placeholder="Start writing… Leave a blank line between paragraphs."></textarea>
+          <textarea
+            id="body"
+            class="in ed-text"
+            aria-label="Chapter text"
+            spellcheck="true"
+            placeholder="Start writing… Leave a blank line between paragraphs."
+          ></textarea>
           <article class="page ed-prev" id="prev" hidden></article>
         </section>
       </div>
