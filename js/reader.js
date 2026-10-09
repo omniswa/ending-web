@@ -24,7 +24,7 @@ const DEFAULTS = {
 const FONTS = {
   serif: "var(--serif)",
   sans: "var(--ui)",
-  mono: '"Courier Mono",monospace',
+  mono: '"For Mono",monospace',
 };
 const OPTS = {
   font: ["serif", "sans", "mono"],

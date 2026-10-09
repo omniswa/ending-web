@@ -35,7 +35,7 @@ function fit(ctx, s, max) {
 export async function quoteBlob({ text, title, author }) {
   try {
     await Promise.all([
-      document.fonts.load('italic 500 60px "IS Serif"'),
+      document.fonts.load('italic 500 60px "For Serif"'),
       document.fonts.load('600 40px "For Serif"'),
       document.fonts.load('400 32px "For Sans"'),
     ]);
