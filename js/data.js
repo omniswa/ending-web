@@ -1,5 +1,5 @@
 import { store, obj } from "./app.js";
-import { GOALS, dayKey } from "./stats.js";
+import { GOALS, dayKey, flushTime } from "./stats.js";
 const KEYS = ["favs", "progress", "reader", "days", "goal", "highlights"];
 const isObj = (v) => v && typeof v === "object" && !Array.isArray(v);
 const okKey = (k) =>
@@ -12,6 +12,7 @@ const save = (k, v) => {
 };
 
 export function exportData() {
+  flushTime();
   const data = {};
   for (const k of KEYS) {
     const v = store.read(k, null);
@@ -51,14 +52,13 @@ export function importData(text) {
   if (isObj(d.favs)) {
     const f = obj("favs");
     for (const [id, v] of Object.entries(d.favs)) {
-      if (!okKey(id) || !isObj(v)) continue;
-      const cur = f[id],
-        fav = cur ? cur.fav !== false || v.fav !== false : v.fav !== false;
+      // Old exports may contain non-favorite "finished" entries; those are no longer kept.
+      if (!okKey(id) || !isObj(v) || v.fav === false) continue;
+      const cur = f[id];
       f[id] = {
         at: cur?.at ?? (Number.isFinite(v.at) ? v.at : Date.now()),
         done: !!(cur?.done || v.done),
       };
-      if (!fav) f[id].fav = false;
       n.favs++;
     }
     save("favs", f);

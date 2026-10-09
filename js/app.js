@@ -46,11 +46,30 @@ export const store = {
       return false;
     }
   },
+  remove(k) {
+    try {
+      localStorage.removeItem("3nding:" + k);
+    } catch {}
+  },
 };
 export const obj = (k) => {
   const v = store.read(k, {});
   return v && typeof v === "object" && !Array.isArray(v) ? v : {};
 };
+
+// One-time cleanup of data that older versions left in localStorage:
+// the cached library list, and "finished but not a favorite" entries.
+(() => {
+  store.remove("books");
+  const f = obj("favs");
+  let dirty = false;
+  for (const id of Object.keys(f))
+    if (f[id]?.fav === false) {
+      delete f[id];
+      dirty = true;
+    }
+  if (dirty) store.write("favs", f);
+})();
 
 const friendly = (e) => {
   if (e?.name === "TimeoutError") return new Error("This is taking too long");
@@ -86,20 +105,6 @@ export async function fetchBody(
   }
 }
 
-const CACHE_KEY = "3nding:books";
-const readCache = () => {
-  try {
-    const c = JSON.parse(localStorage.getItem(CACHE_KEY));
-    return Array.isArray(c?.list) && c.list.length ? c.list : null;
-  } catch {
-    return null;
-  }
-};
-const writeCache = (list) => {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), list }));
-  } catch {}
-};
 const normalize = (list) => {
   const seen = new Set();
   return list
@@ -154,26 +159,11 @@ const network = () =>
       throw e;
     }));
 
-export async function loadBooks({ onFresh, fresh = false } = {}) {
-  const cached = fresh ? null : readCache();
-  if (!cached) {
-    const { raw, books } = await network();
-    writeCache(raw);
-    return books;
-  }
-  const before = JSON.stringify(cached);
-  setTimeout(
-    () =>
-      network()
-        .then(({ raw, books }) => {
-          if (JSON.stringify(raw) === before) return;
-          writeCache(raw);
-          onFresh?.(books);
-        })
-        .catch(() => {}),
-    0,
-  );
-  return normalize(cached);
+// The library list is never kept in localStorage: books.json is preloaded and
+// revalidated by the browser's own HTTP cache. `fresh` forces a new request.
+export async function loadBooks({ fresh = false } = {}) {
+  if (fresh) netPromise = null;
+  return (await network()).books;
 }
 
 export const favs = () => obj("favs");

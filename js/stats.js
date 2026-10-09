@@ -2,10 +2,34 @@ import { store } from "./app.js";
 export const GOALS = [5, 10, 15, 20, 30, 45, 60];
 export const dayKey = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-const days = () => {
+const FLUSH_MS = 30000;
+// Reading time is buffered in memory and written to storage only now and then
+// (every 30 s, when the daily goal is hit, and when the page is hidden/closed).
+let pending = 0,
+  pendDay = "",
+  flushedAt = Date.now();
+const stored = () => {
   const d = store.read("days", {});
   return d && typeof d === "object" && !Array.isArray(d) ? d : {};
 };
+const days = () => {
+  const d = stored();
+  if (pending) d[pendDay] = (d[pendDay] || 0) + pending;
+  return d;
+};
+export function flushTime() {
+  if (!pending) return;
+  const d = stored();
+  d[pendDay] = (d[pendDay] || 0) + pending;
+  Object.keys(d)
+    .sort()
+    .slice(0, -400)
+    .forEach((x) => delete d[x]);
+  if (store.write("days", d)) pending = 0;
+  flushedAt = Date.now();
+}
+addEventListener("pagehide", flushTime);
+document.addEventListener("visibilitychange", () => document.hidden && flushTime());
 export function getGoal() {
   const m = +store.read("goal", 10);
   return GOALS.includes(m) ? m : 10;
@@ -14,16 +38,15 @@ export const setGoal = (m) => GOALS.includes(m) && store.write("goal", m);
 export const todaySeconds = () => days()[dayKey()] || 0;
 
 export function addTime(sec) {
-  const d = days(),
-    k = dayKey(),
-    before = d[k] || 0;
-  d[k] = before + sec;
-  Object.keys(d)
-    .sort()
-    .slice(0, -400)
-    .forEach((x) => delete d[x]);
-  store.write("days", d);
-  return before < getGoal() * 60 && d[k] >= getGoal() * 60;
+  const k = dayKey();
+  if (pending && pendDay !== k) flushTime(); // midnight rollover
+  const need = getGoal() * 60,
+    before = days()[k] || 0;
+  pendDay = k;
+  pending += sec;
+  const hit = before < need && before + sec >= need;
+  if (hit || Date.now() - flushedAt >= FLUSH_MS) flushTime();
+  return hit;
 }
 export function streak() {
   const d = days(),

@@ -139,7 +139,10 @@ function apply() {
     $("#rate").value = settings.rate;
     $("#rateVal").textContent = settings.rate.toFixed(1) + "×";
   }
-  store.write("reader", settings);
+  // Nothing to remember when everything is at its default.
+  if (Object.keys(DEFAULTS).every((k) => settings[k] === DEFAULTS[k]))
+    store.remove("reader");
+  else store.write("reader", settings);
 }
 function buildPanel() {
   if (panelBuilt) return;
