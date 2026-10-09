@@ -3,8 +3,6 @@ export const GOALS = [5, 10, 15, 20, 30, 45, 60];
 export const dayKey = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const FLUSH_MS = 30000;
-// Reading time is buffered in memory and written to storage only now and then
-// (every 30 s, when the daily goal is hit, and when the page is hidden/closed).
 let pending = 0,
   pendDay = "",
   flushedAt = Date.now();
@@ -23,13 +21,16 @@ export function flushTime() {
   d[pendDay] = (d[pendDay] || 0) + pending;
   Object.keys(d)
     .sort()
-    .slice(0, -400)
+    .slice(0, -1000)
     .forEach((x) => delete d[x]);
   if (store.write("days", d)) pending = 0;
   flushedAt = Date.now();
 }
 addEventListener("pagehide", flushTime);
-document.addEventListener("visibilitychange", () => document.hidden && flushTime());
+document.addEventListener(
+  "visibilitychange",
+  () => document.hidden && flushTime(),
+);
 export function getGoal() {
   const m = +store.read("goal", 10);
   return GOALS.includes(m) ? m : 10;
@@ -39,7 +40,7 @@ export const todaySeconds = () => days()[dayKey()] || 0;
 
 export function addTime(sec) {
   const k = dayKey();
-  if (pending && pendDay !== k) flushTime(); // midnight rollover
+  if (pending && pendDay !== k) flushTime();
   const need = getGoal() * 60,
     before = days()[k] || 0;
   pendDay = k;

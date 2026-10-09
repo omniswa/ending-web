@@ -139,7 +139,6 @@ function apply() {
     $("#rate").value = settings.rate;
     $("#rateVal").textContent = settings.rate.toFixed(1) + "×";
   }
-  // Nothing to remember when everything is at its default.
   if (Object.keys(DEFAULTS).every((k) => settings[k] === DEFAULTS[k]))
     store.remove("reader");
   else store.write("reader", settings);
@@ -516,7 +515,6 @@ $("#prev").addEventListener("click", () => open(chapter - 1));
 $("#next").addEventListener("click", () => {
   if (!isLast()) return open(chapter + 1);
   const f = favs();
-  // Only favorites can be finished; everything else just goes back.
   if (!isFav(f, book.id) || f[book.id].done) return (location.href = "index.html");
   f[book.id] = { ...f[book.id], done: true };
   store.write("favs", f);

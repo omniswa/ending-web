@@ -57,8 +57,6 @@ export const obj = (k) => {
   return v && typeof v === "object" && !Array.isArray(v) ? v : {};
 };
 
-// One-time cleanup of data that older versions left in localStorage:
-// the cached library list, and "finished but not a favorite" entries.
 (() => {
   store.remove("books");
   const f = obj("favs");
@@ -159,8 +157,6 @@ const network = () =>
       throw e;
     }));
 
-// The library list is never kept in localStorage: books.json is preloaded and
-// revalidated by the browser's own HTTP cache. `fresh` forces a new request.
 export async function loadBooks({ fresh = false } = {}) {
   if (fresh) netPromise = null;
   return (await network()).books;
@@ -183,7 +179,6 @@ export function setDone(id, done) {
   const f = favs();
   if (!f[id]) return;
   if (f[id].fav === false) {
-    // Legacy "finished but not a favorite" entry: it can only be cleared, never set.
     if (done) return;
     delete f[id];
   } else f[id].done = done;

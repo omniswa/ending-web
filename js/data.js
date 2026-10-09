@@ -52,7 +52,6 @@ export function importData(text) {
   if (isObj(d.favs)) {
     const f = obj("favs");
     for (const [id, v] of Object.entries(d.favs)) {
-      // Old exports may contain non-favorite "finished" entries; those are no longer kept.
       if (!okKey(id) || !isObj(v) || v.fav === false) continue;
       const cur = f[id];
       f[id] = {
