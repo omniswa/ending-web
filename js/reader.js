@@ -174,7 +174,6 @@ const ratio = () => {
 };
 function save() {
   if (!book || !manifest || !ready) return;
-  // Progress is only remembered for favorited books.
   if (isFav(favs(), book.id)) {
     const p = obj("progress");
     p[book.id] = {
@@ -322,7 +321,6 @@ async function init() {
   try {
     const id = new URLSearchParams(location.search).get("id");
     book = (await loadBooks()).find((b) => b.id === id);
-    // Saved list may predate this book; check the live one before giving up.
     if (!book) book = (await loadBooks({ fresh: true })).find((b) => b.id === id);
     if (!book) throw new Error("Book not found");
     const buf = await fetchBody(book.zip, (r) => r.arrayBuffer(), {

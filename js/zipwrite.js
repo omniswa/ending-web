@@ -23,7 +23,6 @@ function dosStamp(d) {
   ];
 }
 
-// files: [{ name, text }] -> Blob (application/zip), readable by readZip().
 export async function writeZip(files) {
   const [time, date] = dosStamp(new Date());
   const parts = [],

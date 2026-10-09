@@ -2,7 +2,6 @@ import { esc, norm, store, toast } from "./app.js";
 import { readZip } from "./zip.js";
 import { writeZip } from "./zipwrite.js";
 
-// Where contributors send finished zips. Leave a value empty to hide it.
 const SUBMIT = {
   telegram: "", // e.g. "https://t.me/yourname"
   contact: "", // e.g. "https://yoursite.com/contact" or "mailto:you@example.com"
@@ -69,7 +68,6 @@ let doc = drafts.find((d) => d.id === store.read("draftCur", "")) || drafts[0],
 const label = (d) => d.title.trim() || "Untitled";
 const chLabel = (c, i) => c.title.trim() || `Chapter ${i + 1}`;
 
-/* ---------- saving ---------- */
 const STATE = {
   saved: "Saved on this device",
   saving: "Saving…",
@@ -93,7 +91,6 @@ function queueSave() {
   saveTimer = setTimeout(persist, 400);
 }
 
-/* ---------- rendering ---------- */
 function renderNb() {
   $("#nb").innerHTML = drafts
     .map(
@@ -196,7 +193,6 @@ function renderAll() {
   renderCheck();
 }
 
-/* ---------- editing ---------- */
 $("#mTitle").addEventListener("input", (e) => {
   doc.title = e.target.value;
   queueSave();
@@ -292,8 +288,6 @@ $("#chAdd").addEventListener("click", () => {
   $("#chTitle").focus();
 });
 
-// On wide screens the chapter list is always open; on phones it collapses
-// so the writing area stays in view.
 function syncDet() {
   if (wide.matches) $("#chDet").open = true;
 }
@@ -313,7 +307,6 @@ function setMode(p) {
 $("#modeEdit").addEventListener("click", () => setMode(false));
 $("#modePrev").addEventListener("click", () => setMode(true));
 
-/* ---------- notebooks ---------- */
 $("#nb").addEventListener("change", (e) => {
   persist();
   doc = drafts.find((d) => d.id === e.target.value) || drafts[0];
@@ -339,7 +332,6 @@ $("#nbDel").addEventListener("click", () => {
   toast("Notebook deleted");
 });
 
-/* ---------- output ---------- */
 const pub = $("#pub");
 $("#pubBtn").addEventListener("click", () => {
   persist();
@@ -420,7 +412,6 @@ $("#md").addEventListener("click", () => {
   toast("Markdown saved");
 });
 
-/* ---------- import ---------- */
 function splitText(name, text) {
   const base = name.replace(/\.[^.]+$/, "");
   const parts = text.replace(/\r\n?/g, "\n").split(/^(?=# [^\n]+$)/m).filter((x) => x.trim());
@@ -485,7 +476,6 @@ $("#impFile").addEventListener("change", async (e) => {
   }
 });
 
-/* ---------- contribute links ---------- */
 (function sendLinks() {
   const links = [];
   if (SUBMIT.telegram) links.push(["Telegram", SUBMIT.telegram]);
@@ -500,7 +490,6 @@ $("#impFile").addEventListener("change", async (e) => {
   } catch {}
 })();
 
-/* ---------- shortcuts & lifecycle ---------- */
 addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "s") {
     e.preventDefault();

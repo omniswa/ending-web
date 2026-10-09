@@ -52,8 +52,6 @@ export const obj = (k) => {
   return v && typeof v === "object" && !Array.isArray(v) ? v : {};
 };
 
-/* ---------- network ---------- */
-// Friendly messages for the failures people can actually act on.
 const friendly = (e) => {
   if (e?.name === "TimeoutError") return new Error("This is taking too long");
   if (e instanceof TypeError) return new Error("You seem to be offline");
@@ -62,10 +60,6 @@ const friendly = (e) => {
 const transient = (e) =>
   e?.name === "TimeoutError" || e instanceof TypeError || e?.retry === true;
 
-// Fetches `url` and reads the body with `read(res)` inside the same timeout
-// window, so a stall while the body is downloading is reported like a stalled
-// request instead of leaking a raw DOMException. Retries once on timeouts,
-// network errors and 408/429/5xx responses.
 export async function fetchBody(
   url,
   read,
@@ -92,7 +86,6 @@ export async function fetchBody(
   }
 }
 
-/* ---------- library list (cached) ---------- */
 const CACHE_KEY = "3nding:books";
 const readCache = () => {
   try {
@@ -102,7 +95,6 @@ const readCache = () => {
     return null;
   }
 };
-// Silent on purpose: a full cache must not trigger the "could not save" toast.
 const writeCache = (list) => {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), list }));
@@ -162,9 +154,6 @@ const network = () =>
       throw e;
     }));
 
-// With a saved copy this resolves immediately and refreshes in the background;
-// `onFresh(books)` is called only if the library actually changed. Without one
-// it waits for the network. `fresh: true` skips the saved copy.
 export async function loadBooks({ onFresh, fresh = false } = {}) {
   const cached = fresh ? null : readCache();
   if (!cached) {
@@ -173,7 +162,6 @@ export async function loadBooks({ onFresh, fresh = false } = {}) {
     return books;
   }
   const before = JSON.stringify(cached);
-  // Deferred so the caller's first render always lands before any update.
   setTimeout(
     () =>
       network()
@@ -193,8 +181,8 @@ export const isFav = (f, id) => !!f[id] && f[id].fav !== false;
 export function toggleFav(id) {
   const f = favs();
   if (isFav(f, id)) {
-    if (f[id].done) f[id] = { ...f[id], fav: false };
-    else delete f[id];
+    delete f[id];
+    resetProgress(id);
   } else {
     f[id] = { at: Date.now(), done: !!f[id]?.done };
   }
@@ -214,9 +202,13 @@ export function resetProgress(id) {
     delete p[id];
     store.write("progress", p);
   }
+  const hl = store.read("highlights", []);
+  if (Array.isArray(hl) && hl.some((h) => h.book === id))
+    store.write(
+      "highlights",
+      hl.filter((h) => h.book !== id),
+    );
 }
-// Reads saved favorites and progress once, so a render can share the result
-// instead of re-parsing localStorage for every card.
 export const snapshot = () => ({ f: favs(), p: obj("progress") });
 export function percent(id, snap = snapshot()) {
   if (snap.f[id]?.done) return 100;
@@ -281,9 +273,6 @@ export function card(b, { managed = false, row = false, snap } = {}) {
 <div class="meta"><h3 class="t"><a href="${href}">${t}</a></h3><p class="a">${esc(b.author)}</p>
 <div class="acts"><a class="btn primary" href="${href}"${pct === 100 ? ' data-act="again"' : ""}>${label}</a>${done}<button class="icon-btn" data-act="share" aria-label="Share: ${t}" title="Share">${icon("share")}</button></div></div></article>`;
 }
-
-// `books` may be an array or a function returning the current array, so the
-// handler keeps working after a background refresh swaps the list.
 export function bindCards(root, books, onChange) {
   root.addEventListener("click", async (e) => {
     const btn = e.target.closest("[data-act]");
