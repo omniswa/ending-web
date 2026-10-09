@@ -216,7 +216,6 @@ nav a[aria-current] {
     var(--shadow),
     inset 5px 0 8px -4px #0005;
   transition: transform 0.2s;
-  white-space: pre-wrap;
 }
 .cover:hover {
   transform: translateY(-4px);
@@ -307,9 +306,6 @@ nav a[aria-current] {
   gap: 0.4rem;
   margin-top: auto;
   padding-top: 0.6rem;
-}
-.acts .primary {
-  flex: 1 1 100%;
 }
 .acts .icon-btn {
   flex: 1 1 0;
@@ -954,7 +950,7 @@ nav a[aria-current] {
     justify-content: center;
   }
   .toast {
-    width: min(auto, 60vw);
+    width: auto;
   }
   .foot nav {
     gap: 0.2rem 0.8rem;
