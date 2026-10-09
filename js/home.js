@@ -6,6 +6,7 @@ import {
   favs,
   norm,
   percent,
+  snapshot,
   showError,
   skeleton,
 } from "./app.js";
@@ -49,16 +50,19 @@ function syncUrl() {
   history.replaceState(null, "", location.pathname + (s ? "?" + s : "") + location.hash);
 }
 
-function renderRecent() {
-  const prog = obj("progress");
-  const list = Object.entries(prog)
+function renderRecent(snap = snapshot()) {
+  const list = Object.entries(snap.p)
     .sort((a, b) => (b[1]?.updated || 0) - (a[1]?.updated || 0))
     .map(([id]) => byId.get(id))
-    .filter((b) => b && percent(b.id) > 0 && percent(b.id) < 100);
+    .filter((b) => {
+      if (!b) return false;
+      const pc = percent(b.id, snap);
+      return pc > 0 && pc < 100;
+    });
   const shown = state.allRecent ? list : list.slice(0, RECENT);
   $("#recent").hidden = !list.length;
   $("#recentList").innerHTML = shown
-    .map((b) => card(b, { row: true }))
+    .map((b) => card(b, { row: true, snap }))
     .join("");
   $("#recentList").removeAttribute("aria-busy");
   const more = $("#recentMore");
@@ -69,6 +73,7 @@ function renderRecent() {
   more.setAttribute("aria-expanded", String(state.allRecent));
 }
 function render() {
+  const snap = snapshot();
   const words = norm(state.q).split(/\s+/).filter(Boolean);
   view = sortedBooks().filter((b) => words.every((w) => b._s.includes(w)));
   const pages = Math.max(1, Math.ceil(view.length / PER));
@@ -80,7 +85,7 @@ function render() {
   $("#grid").innerHTML = view.length
     ? view
         .slice((state.page - 1) * PER, state.page * PER)
-        .map((b) => card(b))
+        .map((b) => card(b, { snap }))
         .join("")
     : '<div class="empty"><p>No books match your search.</p><button class="btn" id="clear">Clear search</button></div>';
   const nums = [];
@@ -98,7 +103,7 @@ function render() {
       ? html +
         `<button class="btn" data-p="${state.page + 1}" ${state.page === pages ? "disabled" : ""}>Next</button>`
       : "";
-  renderRecent();
+  renderRecent(snap);
 }
 $("#q").value = state.q;
 $("#sort").value = state.sort;

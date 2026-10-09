@@ -1,6 +1,5 @@
 import { store } from "./app.js";
 export const GOALS = [5, 10, 15, 20, 30, 45, 60];
-const MIN_STREAK = 60; 
 export const dayKey = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const days = () => {
@@ -28,10 +27,11 @@ export function addTime(sec) {
 }
 export function streak() {
   const d = days(),
+    need = getGoal() * 60,
     day = new Date();
   let n = 0;
-  if (!(d[dayKey(day)] >= MIN_STREAK)) day.setDate(day.getDate() - 1); 
-  while (d[dayKey(day)] >= MIN_STREAK) {
+  if (!(d[dayKey(day)] >= need)) day.setDate(day.getDate() - 1);
+  while (d[dayKey(day)] >= need) {
     n++;
     day.setDate(day.getDate() - 1);
   }

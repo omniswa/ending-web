@@ -5,6 +5,7 @@ import {
   favs,
   isFav,
   percent,
+  snapshot,
   showError,
   skeleton,
 } from "./app.js";
@@ -18,21 +19,23 @@ const EMPTY = {
 let books = [],
   filter = "all",
   shown = STEP;
-const match = (b, f) => {
+const match = (b, snap) => {
+  const f = snap.f;
   if (filter === "all") return true;
   if (filter === "done") return !!f[b.id].done;
-  return !f[b.id].done && percent(b.id) > 0;
+  return !f[b.id].done && percent(b.id, snap) > 0;
 };
 function render() {
-  const f = favs();
+  const snap = snapshot(),
+    f = snap.f;
   const list = books
     .filter((b) => isFav(f, b.id))
     .sort((a, b) => (f[b.id].at || 0) - (f[a.id].at || 0))
-    .filter((b) => match(b, f));
+    .filter((b) => match(b, snap));
   $("#grid").removeAttribute("aria-busy");
   $("#grid").innerHTML = list
     .slice(0, shown)
-    .map((b) => card(b, { managed: true }))
+    .map((b) => card(b, { managed: true, snap }))
     .join("");
   const rest = list.length - shown;
   $("#more").hidden = rest <= 0;
