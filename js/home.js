@@ -175,12 +175,7 @@ const setBooks = (b) => {
   byId = new Map(b.map((x) => [x.id, x]));
   for (const k in sorted) delete sorted[k];
 };
-loadBooks({
-  onFresh: (b) => {
-    setBooks(b);
-    render();
-  },
-})
+loadBooks()
   .then((b) => {
     setBooks(b);
     bindCards($("#grid"), () => books, render);

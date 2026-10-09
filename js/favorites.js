@@ -71,12 +71,7 @@ if (!$("#grid").querySelector(".sk")) $("#grid").innerHTML = skeleton(6);
 const refresh = () => books.length && render();
 addEventListener("pageshow", (e) => e.persisted && refresh());
 addEventListener("storage", refresh);
-loadBooks({
-  onFresh: (b) => {
-    books = b;
-    render();
-  },
-})
+loadBooks()
   .then((b) => {
     books = b;
     bindCards($("#grid"), () => books, render);
