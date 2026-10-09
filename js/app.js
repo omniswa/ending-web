@@ -215,9 +215,12 @@ export function resetProgress(id) {
     store.write("progress", p);
   }
 }
-export function percent(id) {
-  if (favs()[id]?.done) return 100;
-  const p = obj("progress")[id];
+// Reads saved favorites and progress once, so a render can share the result
+// instead of re-parsing localStorage for every card.
+export const snapshot = () => ({ f: favs(), p: obj("progress") });
+export function percent(id, snap = snapshot()) {
+  if (snap.f[id]?.done) return 100;
+  const p = snap.p[id];
   if (!p || !p.total) return 0;
   return Math.min(99, Math.floor(((p.chapter + p.ratio) / p.total) * 100));
 }
@@ -254,11 +257,12 @@ export const skeleton = (n = 6, { row = false } = {}) =>
       : '<div class="card sk" aria-hidden="true"><div class="cover"></div><i></i><i></i></div>',
   ).join("");
 
-export function card(b, { managed = false, row = false } = {}) {
-  const all = favs(),
+export function card(b, { managed = false, row = false, snap } = {}) {
+  snap ??= snapshot();
+  const all = snap.f,
     f = all[b.id],
     fav = isFav(all, b.id),
-    pct = percent(b.id),
+    pct = percent(b.id, snap),
     t = esc(b.title),
     href = `reader.html?id=${encodeURIComponent(b.id)}`;
   const label =

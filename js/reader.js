@@ -4,6 +4,7 @@ import {
   store,
   obj,
   favs,
+  isFav,
   icon,
   esc,
   toast,
@@ -173,14 +174,17 @@ const ratio = () => {
 };
 function save() {
   if (!book || !manifest || !ready) return;
-  const p = obj("progress");
-  p[book.id] = {
-    chapter,
-    ratio: ratio(),
-    total: manifest.chapters.length,
-    updated: Date.now(),
-  };
-  store.write("progress", p);
+  // Progress is only remembered for favorited books.
+  if (isFav(favs(), book.id)) {
+    const p = obj("progress");
+    p[book.id] = {
+      chapter,
+      ratio: ratio(),
+      total: manifest.chapters.length,
+      updated: Date.now(),
+    };
+    store.write("progress", p);
+  }
   $("#bar").style.width =
     ((chapter + ratio()) / manifest.chapters.length) * 100 + "%";
 }
