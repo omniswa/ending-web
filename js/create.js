@@ -1,4 +1,5 @@
-import { esc, norm, store, toast } from "./app.js";
+import { esc, norm, toast } from "./app.js";
+import * as db from "./idb.js";
 import { readZip } from "./zip.js";
 import { writeZip } from "./zipwrite.js";
 
@@ -58,12 +59,14 @@ function fix(d) {
   };
 }
 
-const saved = store.read("drafts", []);
-let drafts = (Array.isArray(saved) ? saved : []).map(fix).filter(Boolean);
+const loaded = await db.load();
+let drafts = loaded.drafts.map(fix).filter(Boolean);
 if (!drafts.length) drafts.push(blank());
-let doc = drafts.find((d) => d.id === store.read("draftCur", "")) || drafts[0],
+let doc = drafts.find((d) => d.id === loaded.cur) || drafts[0],
   preview = false,
-  saveTimer;
+  saveTimer = 0,
+  inflight = 0,
+  writing = Promise.resolve();
 
 const label = (d) => d.title.trim() || "Untitled";
 const chLabel = (c, i) => c.title.trim() || `Chapter ${i + 1}`;
@@ -78,12 +81,36 @@ function setSave(k) {
   el.dataset.s = k;
   el.textContent = STATE[k];
 }
+const bc = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("3nding:drafts") : null;
+let lastNotice = 0;
+bc?.addEventListener("message", () => {
+  if (Date.now() - lastNotice < 10000) return;
+  lastNotice = Date.now();
+  toast("Notebooks changed in another tab");
+});
+// Writes are queued so they land in order; resolves to true/false.
+function enqueue(task) {
+  inflight++;
+  writing = writing
+    .then(task)
+    .then(() => true, () => false)
+    .then((ok) => {
+      inflight--;
+      if (!ok) setSave("error");
+      else if (!inflight && !saveTimer) {
+        setSave("saved");
+        bc?.postMessage(1);
+      }
+      return ok;
+    });
+  return writing;
+}
 function persist() {
   clearTimeout(saveTimer);
+  saveTimer = 0;
   doc.at = Date.now();
-  const ok = store.write("drafts", drafts) && store.write("draftCur", doc.id);
-  setSave(ok ? "saved" : "error");
-  return ok;
+  const snap = structuredClone(doc);
+  return enqueue(() => db.save(snap, drafts));
 }
 function queueSave() {
   clearTimeout(saveTimer);
@@ -324,9 +351,11 @@ $("#nbNew").addEventListener("click", () => {
 $("#nbDel").addEventListener("click", () => {
   const filled = doc.title.trim() || doc.chapters.some((c) => c.text.trim());
   if (filled && !confirm(`Delete “${label(doc)}”? This can't be undone.`)) return;
+  const gone = doc.id;
   drafts = drafts.filter((d) => d !== doc);
   if (!drafts.length) drafts.push(blank());
   doc = drafts[0];
+  enqueue(() => db.remove(gone, drafts));
   persist();
   renderAll();
   toast("Notebook deleted");
@@ -493,12 +522,9 @@ $("#impFile").addEventListener("change", async (e) => {
 addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "s") {
     e.preventDefault();
-    if (persist()) toast("Saved on this device");
+    persist().then((ok) => ok && toast("Saved on this device"));
   }
 });
 addEventListener("pagehide", persist);
 document.addEventListener("visibilitychange", () => document.hidden && persist());
-addEventListener("storage", (e) => {
-  if (e.key && e.key.startsWith("3nding:draft")) toast("Notebooks changed in another tab");
-});
 renderAll();
