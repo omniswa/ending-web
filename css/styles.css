@@ -21,6 +21,7 @@
   --muted: #5f6f6c;
   --line: #d9e0dc;
   --accent: #0f6b61;
+  --accent-secondary: #B7791F;
   --on-accent: #fff;
   --shadow: 0 1px 2px #0001, 0 12px 28px -16px #0004;
   --sk: color-mix(in srgb, var(--text) 11%, var(--bg));
@@ -57,6 +58,7 @@ html[data-theme="dark"] {
   --muted: #8d9a97;
   --line: #364240;
   --accent: #5fd3c0;
+  --accent-secondary: #E5B454;
   --on-accent: #06201b;
 }
 html[data-theme="oled"] {
@@ -766,6 +768,7 @@ nav a[aria-current] {
   border: none;
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
+  border-bottom-right-radius: 14px;
   background: var(--surface);
   color: var(--text);
 }
@@ -884,14 +887,12 @@ nav a[aria-current] {
   border: 2px solid var(--line);
 }
 .st-week .some i {
-  border-color: var(--accent);
+  border-color: var(--accent-secondary);
 }
 .st-week .met i {
-  background: var(--accent);
   border-color: var(--accent);
 }
 .st-week .miss i {
-  background: var(--danger);
   border-color: var(--danger);
 }
 .st-data {
@@ -961,12 +962,13 @@ nav a[aria-current] {
   .foot nav {
     gap: 0.2rem 0.8rem;
   }
-  .hl-in {
+  #fv .hl-in {
     text-align: center;
   }
-  .hl-act{
+  #fv .hl-act {
     display: grid;
     width: 100%;
+    gap: 0.6rem;
   }
 }
 
@@ -1301,8 +1303,10 @@ nav a[aria-current] {
   max-height: 85dvh;
   padding: 0;
   overflow: auto;
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  border: none;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-bottom-right-radius: 14px;
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow);
@@ -1313,7 +1317,7 @@ nav a[aria-current] {
 .pub-in {
   display: grid;
   gap: 1rem;
-  padding: 1.1rem;
+  padding: 1.1rem 1.1rem 0;
 }
 .pub-head {
   display: flex;
@@ -1324,6 +1328,10 @@ nav a[aria-current] {
 .pub-head h2 {
   margin: 0;
   font-size: 1.25rem;
+}
+.pub-in .ed-acts .btn {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
 }
 .chk {
   list-style: none;
@@ -1348,13 +1356,6 @@ nav a[aria-current] {
 }
 .chk .warn {
   color: var(--muted);
-}
-.steps {
-  padding-left: 1.2rem;
-  color: var(--muted);
-  font-size: 0.9rem;
-  display: grid;
-  gap: 0.2rem;
 }
 
 @media (min-width: 860px) {

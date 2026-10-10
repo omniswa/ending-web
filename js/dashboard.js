@@ -29,7 +29,7 @@ export function mountStats(main, onImport = () => {}) {
 <div class="st-week" role="img" aria-label="Last 7 days">${week()
       .map(
         (d) =>
-          `<span class="${d.sec >= g * 60 ? "met" : d.missed ? "miss" : d.sec >= 60 ? "some" : ""}" title="${esc(d.key)}: ${Math.floor(d.sec / 60)} min${d.missed ? " (goal missed)" : ""}"><i></i>${esc(d.label)}</span>`,
+          `<span class="${d.sec >= g * 60 ? "met" : d.missed ? "miss" : d.sec >= 10 ? "some" : ""}" title="${esc(d.key)}: ${Math.floor(d.sec / 60)} min${d.missed ? " (goal missed)" : ""}"><i></i>${esc(d.label)}</span>`,
       )
       .join("")}</div>
 <div class="st-data"><button class="btn" data-d="exp">Export progress</button><button class="btn" data-d="imp">Import progress</button><input id="imp" type="file" accept="application/json,.json" hidden></div>`;
