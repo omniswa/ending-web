@@ -1,8 +1,5 @@
 import { store } from "./app.js";
 
-// IndexedDB storage for Write notebooks.
-// Stores: "drafts" (one record per notebook, keyed by id) and "meta" ("cur" = open notebook id).
-// Falls back to localStorage if IndexedDB is unavailable (e.g. some private modes).
 const NAME = "3nding",
   VERSION = 1;
 let dbp,
@@ -59,7 +56,6 @@ export async function load() {
       req(t.objectStore("meta").get("cur")),
     ]);
     if (!drafts.length) {
-      // One-time migration from localStorage.
       const old = store.read("drafts", []);
       const items = (Array.isArray(old) ? old : []).filter(
         (x) => x && typeof x === "object" && typeof x.id === "string" && x.id,
@@ -86,7 +82,6 @@ export async function load() {
   }
 }
 
-// Saves one notebook and marks it as the open one. `all` is only used by the localStorage fallback.
 export async function save(doc, all) {
   if (fallback) {
     if (!(store.write("drafts", all) && store.write("draftCur", doc.id)))

@@ -83,7 +83,6 @@ bc?.addEventListener("message", () => {
   lastNotice = Date.now();
   toast("Notebooks changed in another tab");
 });
-// Writes are queued so they land in order; resolves to true/false.
 function enqueue(task) {
   inflight++;
   writing = writing

@@ -1,16 +1,16 @@
 @font-face {
   font-family: "For Sans";
-  src: url(../fonts/sans.woff2) format("woff2");
+  src: url(../fonts/sans.woff2);
   font-display: swap;
 }
 @font-face {
   font-family: "For Serif";
-  src: url(../fonts/serif.woff2) format("woff2");
+  src: url(../fonts/serif.woff2);
   font-display: swap;
 }
 @font-face {
   font-family: "For Mono";
-  src: url(../fonts/mono.woff2) format("woff2");
+  src: url(../fonts/mono.woff2);
   font-display: swap;
 }
 :root {

@@ -74,8 +74,6 @@ export function week() {
     out.push({
       key,
       sec: d[key] || 0,
-      // A finished day that missed the goal (only once reading has started,
-      // so brand-new users don't see a row of red).
       missed: !!first && key >= first && key < today && (d[key] || 0) < need,
       label: day.toLocaleDateString(undefined, { weekday: "narrow" }),
     });
