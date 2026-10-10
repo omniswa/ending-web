@@ -63,6 +63,9 @@ export function streak() {
 }
 export function week() {
   const d = days(),
+    need = getGoal() * 60,
+    today = dayKey(),
+    first = Object.keys(d).sort()[0],
     out = [];
   for (let i = 6; i >= 0; i--) {
     const day = new Date();
@@ -71,6 +74,9 @@ export function week() {
     out.push({
       key,
       sec: d[key] || 0,
+      // A finished day that missed the goal (only once reading has started,
+      // so brand-new users don't see a row of red).
+      missed: !!first && key >= first && key < today && (d[key] || 0) < need,
       label: day.toLocaleDateString(undefined, { weekday: "narrow" }),
     });
   }
