@@ -15,6 +15,18 @@ import { addTime } from "./stats.js";
 import { shareCard } from "./quote.js";
 const $ = (s) => document.querySelector(s),
   root = document.documentElement;
+// Return to the page the reader was opened from (Library or Favorites),
+// keeping its query string (search, sort, page). Falls back to the Library.
+const backUrl = (() => {
+  try {
+    const r = new URL(document.referrer);
+    if (r.origin === location.origin && /(^|\/)favorites(\.html)?$/.test(r.pathname))
+      return "favorites.html";
+    if (r.origin === location.origin && /(^|\/)(index(\.html)?)?$/.test(r.pathname))
+      return "index.html" + r.search;
+  } catch {}
+  return "index.html";
+})();
 const DEFAULTS = {
   font: "serif",
   theme: "paper",
@@ -198,7 +210,7 @@ function updateNext() {
   n.textContent = !isLast()
     ? "Next"
     : !isFav(favs(), book.id) || favs()[book.id]?.done
-      ? "Back to library"
+      ? "Go back"
       : "Mark as finished";
 }
 
@@ -313,6 +325,7 @@ async function open(i, r = 0, keepTts = false) {
 async function init() {
   history.scrollRestoration = "manual";
   $("#back").innerHTML = icon("back");
+  $("#back").href = backUrl;
   $("#fs").innerHTML = icon("full");
   if (!document.fullscreenEnabled) $("#fs").hidden = true;
   buildPanel();
@@ -359,7 +372,7 @@ async function init() {
       e instanceof SyntaxError
         ? "This book's contents could not be read"
         : e.message || "Something went wrong",
-      '<a class="btn" href="index.html">Back to library</a>',
+      `<a class="btn" href="${esc(backUrl)}">Go back</a>`,
     );
   }
 }
@@ -515,7 +528,7 @@ $("#prev").addEventListener("click", () => open(chapter - 1));
 $("#next").addEventListener("click", () => {
   if (!isLast()) return open(chapter + 1);
   const f = favs();
-  if (!isFav(f, book.id) || f[book.id].done) return (location.href = "index.html");
+  if (!isFav(f, book.id) || f[book.id].done) return (location.href = backUrl);
   f[book.id] = { ...f[book.id], done: true };
   store.write("favs", f);
   toast("Marked as finished");
