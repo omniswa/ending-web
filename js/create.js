@@ -3,11 +3,6 @@ import * as db from "./idb.js";
 import { readZip } from "./zip.js";
 import { writeZip } from "./zipwrite.js";
 
-const SUBMIT = {
-  telegram: "", // e.g. "https://t.me/yourname"
-  contact: "", // e.g. "https://yoursite.com/contact" or "mailto:you@example.com"
-};
-
 const $ = (s) => document.querySelector(s);
 const LANG_RE = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/;
 const MAX_CHAPTERS = 500,
@@ -210,7 +205,6 @@ function renderCheck() {
     ...(bad.length ? [] : ok.map((m) => `<li class="ok"><b aria-hidden="true">✓</b><span>${esc(m)}</span></li>`)),
   ].join("");
   $("#dl").disabled = !!bad.length;
-  $("#share").disabled = !!bad.length;
 }
 function renderAll() {
   renderNb();
@@ -417,16 +411,6 @@ $("#dl").addEventListener("click", async () => {
     toast("Could not create the zip");
   }
 });
-$("#share").addEventListener("click", async () => {
-  try {
-    const z = await build();
-    if (!z) return;
-    const file = new File([z.blob], z.name, { type: "application/zip" });
-    await navigator.share({ files: [file], title: doc.title.trim() });
-  } catch (e) {
-    if (e?.name !== "AbortError") toast("Could not share the zip");
-  }
-});
 $("#md").addEventListener("click", () => {
   const out = [`# ${label(doc)}`];
   if (doc.author.trim()) out.push(`*${doc.author.trim()}*`);
@@ -504,20 +488,6 @@ $("#impFile").addEventListener("change", async (e) => {
     );
   }
 });
-
-(function sendLinks() {
-  const links = [];
-  if (SUBMIT.telegram) links.push(["Telegram", SUBMIT.telegram]);
-  if (SUBMIT.contact) links.push(["Contact", SUBMIT.contact]);
-  $("#sendLinks").innerHTML = links
-    .map(([n, u]) => `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener">Send via ${esc(n)}</a>`)
-    .join("");
-  if (links.length) $("#sendStep").textContent = "Send it to the library owner with the button below.";
-  try {
-    const t = new File([""], "a.zip", { type: "application/zip" });
-    if (navigator.canShare?.({ files: [t] })) $("#share").hidden = false;
-  } catch {}
-})();
 
 addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "s") {
