@@ -3,6 +3,7 @@
   max-width: 65ch;
   margin: 0 auto;
   padding: 0.5rem 0 3rem;
+  text-align: justify;
 }
 .doc h1 {
   margin-bottom: 0.5rem;
@@ -23,6 +24,7 @@
   gap: 0.45rem;
   margin: 0.7rem 0;
   padding-left: 1.2rem;
+  text-align: left;
 }
 .doc a {
   color: var(--accent);

@@ -11,7 +11,7 @@ import {
   skeleton,
 } from "./app.js";
 import { mountStats } from "./dashboard.js";
-const PER = 24,
+const PER = 60,
   RECENT = 3,
   $ = (s) => document.querySelector(s);
 

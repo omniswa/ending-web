@@ -101,7 +101,7 @@ document.body.insertAdjacentHTML(
   "beforeend",
   `<div id="hlbar" hidden><button class="btn primary" data-a="save">Highlight</button><button class="btn" data-a="card">Share card</button></div>
 <dialog id="hl" aria-labelledby="hlT"><div class="hl-in"><div class="hl-head"><h3 id="hlT">Highlights</h3><button class="btn" data-a="close">Close</button></div><ul id="hlList"></ul></div></dialog>
-<dialog id="fv" aria-labelledby="fvT"><div class="hl-in"><h3 id="fvT">Progress is saved for favorites only</h3><p class="muted">Add this book to your favorites to keep your progress. Without it, you can still read, but you will start from the beginning.</p><div class="hl-act"><button class="btn primary" data-a="fav">Add to favorites</button><button class="btn" data-a="close">Continue without saving</button></div></div></dialog>`,
+<dialog id="fv" aria-labelledby="fvT"><div class="hl-in"><h3 id="fvT">Progress is saved for favorites only</h3><p class="muted">Add this book to your favorites to save your reading progress. You can still read without adding it, but you'll have to start each time.</p><div class="hl-act"><button class="btn primary" data-a="fav">Add to favorites</button><button class="btn" data-a="close">Continue without saving</button></div></div></dialog>`,
 );
 
 const highlights = () => {

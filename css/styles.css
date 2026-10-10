@@ -962,7 +962,7 @@ nav a[aria-current] {
     width: auto;
   }
   .foot nav {
-    gap: 0.2rem 0.8rem;
+    gap: 0.2rem 0.6rem;
   }
   #fv .hl-in {
     text-align: center;
