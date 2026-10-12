@@ -1,0 +1,82 @@
+[
+  {
+    "id": "cartographers-daughter",
+    "title": "The Cartographer's Daughter",
+    "author": "Eleanor Whitfield",
+    "added": "2026-10-01",
+    "cover": "https://picsum.photos/seed/book-cartographers-daughter/600/800",
+    "file": "epubs/cartographers-daughter.epub"
+  },
+  {
+    "id": "letters-to-a-young-botanist",
+    "title": "Letters to a Young Botanist",
+    "author": "H. T. Marwick",
+    "added": "2026-10-01",
+    "cover": "https://picsum.photos/seed/book-letters-botanist/600/800",
+    "file": "epubs/letters-to-a-young-botanist.epub"
+  },
+  {
+    "id": "of-silent-things",
+    "title": "Of Silent Things",
+    "author": "Yuki Tawara",
+    "added": "2026-10-01",
+    "cover": "https://picsum.photos/seed/book-silent-things/600/800",
+    "file": "epubs/of-silent-things.epub"
+  },
+  {
+    "id": "year-of-long-afternoons",
+    "title": "The Year of Long Afternoons",
+    "author": "Marco Bianchi",
+    "added": "2026-10-01",
+    "cover": "https://picsum.photos/seed/book-long-afternoons/600/800",
+    "file": "epubs/year-of-long-afternoons.epub"
+  },
+  {
+    "id": "anatomy-of-quiet-room",
+    "title": "Anatomy of a Quiet Room",
+    "author": "Iris Cole",
+    "added": "2026-10-01",
+    "cover": "https://picsum.photos/seed/book-quiet-room/600/800",
+    "file": "epubs/anatomy-of-quiet-room.epub"
+  },
+  {
+    "id": "last-lighthouse-keeper",
+    "title": "The Last Lighthouse Keeper",
+    "author": "A. F. Pemberton",
+    "added": "2026-10-01",
+    "cover": "https://picsum.photos/seed/book-lighthouse-keeper/600/800",
+    "file": "epubs/last-lighthouse-keeper.epub"
+  },
+  {
+    "id": "field-notes-from-the-edge",
+    "title": "Field Notes from the Edge",
+    "author": "Tobias Lyle",
+    "added": "2026-10-01",
+    "cover": "https://picsum.photos/seed/book-field-notes-edge/600/800",
+    "file": "epubs/field-notes-from-the-edge.epub"
+  },
+  {
+    "id": "glasshouse-years",
+    "title": "The Glasshouse Years",
+    "author": "Petra Holm",
+    "added": "2026-10-01",
+    "cover": "https://picsum.photos/seed/book-glasshouse-years/600/800",
+    "file": "epubs/glasshouse-years.epub"
+  },
+  {
+    "id": "slow-waters",
+    "title": "Slow Waters",
+    "author": "Nadia Okafor",
+    "added": "2026-10-01",
+    "cover": "https://picsum.photos/seed/book-slow-water/600/800",
+    "file": "epubs/slow-waters.epub"
+  },
+  {
+    "id": "pocket-book-of-hours",
+    "title": "A Pocket Book of Hours",
+    "author": "Anonymous",
+    "added": "2026-10-01",
+    "cover": "https://picsum.photos/seed/book-pocket-hours/600/800",
+    "file": "epubs/pocket-book-of-hours.epub"
+  }
+]

@@ -1,0 +1,287 @@
+/* Reader: themes, typography and chrome. Reader tokens (--r-*) are remapped onto
+   the shared tokens so every nested component (buttons, dialogs) follows the theme. */
+.reader {
+  --r-bg: #fbfaf7;
+  --r-fg: #25231f;
+  --r-muted: #7a766c;
+  --r-surface: #f0eee8;
+  --r-border: #e1ddd3;
+  --r-accent: #0e7466;
+  --r-font: var(--font-serif);
+  --r-align: left;
+  --r-size: 19px;
+  --r-lh: 1.7;
+  --r-ls: 0em;
+  --r-pad: 32px;
+  --bar-top: 3.5rem;
+  --bar-bottom: 2.75rem;
+
+  --bg: var(--r-bg);
+  --surface: var(--r-bg);
+  --surface-2: var(--r-surface);
+  --border: var(--r-border);
+  --text: var(--r-fg);
+  --muted: var(--r-muted);
+  --accent: var(--r-accent);
+  --accent-hover: var(--r-accent);
+  --accent-contrast: var(--r-bg);
+  --accent-soft: color-mix(in srgb, var(--r-accent) 16%, var(--r-bg));
+
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: var(--r-bg);
+  color: var(--r-fg);
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+.reader[data-theme="sepia"] {
+  --r-bg: #f4ecd8;
+  --r-fg: #4a3a2a;
+  --r-muted: #8b7a63;
+  --r-surface: #eadfc4;
+  --r-border: #dccfae;
+  --r-accent: #8a5a2b;
+}
+.reader[data-theme="dark"] {
+  --r-bg: #1c1d21;
+  --r-fg: #d6d6da;
+  --r-muted: #8d8e96;
+  --r-surface: #26272c;
+  --r-border: #34353b;
+  --r-accent: #6fcfb2;
+}
+.reader[data-theme="oled"] {
+  --r-bg: #000;
+  --r-fg: #c9c9c9;
+  --r-muted: #7a7a7a;
+  --r-surface: #0e0e0e;
+  --r-border: #222;
+  --r-accent: #6fcfb2;
+}
+.reader[data-font="sans"] {
+  --r-font: var(--font-sans);
+}
+.reader[data-font="serif"] {
+  --r-font: var(--font-serif);
+}
+.reader[data-font="mono"] {
+  --r-font: var(--font-mono);
+}
+.reader[data-align="left"] {
+  --r-align: left;
+}
+.reader[data-align="justify"] {
+  --r-align: justify;
+}
+
+.reader .dialog::backdrop {
+  background: rgb(0 0 0 / 0.2);
+  backdrop-filter: none;
+}
+.reader .btn--primary {
+  color: var(--r-bg);
+}
+
+/* ----- Chrome ----- */
+.reader__bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: max(0.5rem, env(safe-area-inset-left))
+    max(0.5rem, env(safe-area-inset-right));
+  background: color-mix(in srgb, var(--r-bg) 90%, transparent);
+  backdrop-filter: blur(12px);
+  transition:
+    transform 0.3s var(--ease),
+    opacity 0.3s;
+}
+.reader__bar--top {
+  top: 0;
+  min-height: var(--bar-top);
+  padding-top: env(safe-area-inset-top);
+  border-bottom: 1px solid var(--r-border);
+}
+.reader__bar--bottom {
+  bottom: 0;
+  min-height: var(--bar-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--r-border);
+  justify-content: center;
+}
+.reader[data-chrome="hidden"] .reader__bar--top {
+  transform: translateY(-100%);
+}
+.reader[data-chrome="hidden"] .reader__bar--bottom {
+  transform: translateY(100%);
+}
+.reader__heading {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  line-height: 1.25;
+}
+.reader__book,
+.reader__chapter {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.reader__book {
+  font-size: 0.9375rem;
+}
+.reader__chapter {
+  font-size: 0.75rem;
+  color: var(--r-muted);
+}
+.reader__tools {
+  display: flex;
+  gap: 0.125rem;
+}
+.reader__status {
+  font-size: 0.75rem;
+  color: var(--r-muted);
+  font-variant-numeric: tabular-nums;
+}
+.reader__progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background: var(--r-border);
+}
+.reader__progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--r-accent);
+  transition: width 0.2s linear;
+}
+
+/* ----- Scroll area ----- */
+.reader__scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  outline: none;
+  -webkit-overflow-scrolling: touch;
+  padding-top: var(--bar-top);
+  padding-bottom: var(--bar-bottom);
+}
+.reader[data-loading="true"] .prose {
+  opacity: 0.4;
+}
+.reader__page {
+  width: min(100%, 50rem);
+  margin-inline: auto;
+  padding: 0 min(var(--r-pad), 14vw) 3rem;
+}
+.reader__chapter-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--r-border);
+}
+
+/* ----- Prose: scoped to element selectors so book markup cannot collide with app classes ----- */
+.prose {
+  font-family: var(--r-font);
+  font-size: var(--r-size);
+  line-height: var(--r-lh);
+  letter-spacing: var(--r-ls);
+  text-align: var(--r-align);
+  color: var(--r-fg);
+  overflow-wrap: break-word;
+  transition: opacity 0.2s;
+}
+.reader[data-align="justify"] .prose {
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+.prose :is(p, ul, ol, blockquote, pre, figure, table) {
+  margin: 1.6em 0 1em;
+  overflow-x: auto;
+}
+.prose :is(p, ul, ol, blockquote, pre, figure, table):webkit-scrollbar {
+  display: none;
+}
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  margin: 1.6em 0 0.6em;
+  line-height: 1.25;
+  text-align: left;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+.prose h1 {
+  font-size: 1.7em;
+  margin-top: 0.5em;
+}
+.prose h2 {
+  font-size: 1.4em;
+}
+.prose h3 {
+  font-size: 1.2em;
+}
+.prose :is(ul, ol) {
+  padding-left: 1.5em;
+  list-style: revert;
+}
+.prose blockquote {
+  padding-left: 1em;
+  border-left: 3px solid var(--r-border);
+  color: var(--r-muted);
+}
+.prose img,
+.prose svg {
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+.prose pre {
+  overflow-x: auto;
+  padding: 0.75em 1em;
+  border-radius: 0.5rem;
+  background: var(--r-surface);
+  font-size: 0.85em;
+}
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+.prose table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+.prose :is(td, th) {
+  padding: 0.25em 0.75em;
+  border: 1px solid var(--r-border);
+}
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--r-border);
+  margin: 2em 0;
+}
+.prose a {
+  color: var(--r-accent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.prose [id] {
+  scroll-margin-top: 4.5rem;
+}
+.prose__error {
+  color: var(--r-muted);
+  text-align: center;
+  padding: 3rem 0;
+}

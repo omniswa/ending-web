@@ -1,0 +1,66 @@
+/* Design tokens. Components only reference these variables, never raw values. */
+:root {
+  color-scheme: light dark;
+
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-serif:
+    "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Charter,
+    Georgia, serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --font-ui: var(--font-sans);
+  --font-display: var(--font-serif);
+
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #eceef2;
+  --border: #dfe2e8;
+  --text: #14171c;
+  --muted: #626976;
+  --accent: #0e7466;
+  --accent-hover: #0a5c51;
+  --accent-contrast: #ffffff;
+  --accent-soft: #dff2ee;
+  --streak: #d97706;
+  --streak-soft: #fdf0d9;
+  --danger: #b42318;
+  --danger-soft: #fbe6e3;
+
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
+  --shadow-md: 0 10px 28px rgb(16 24 40 / 0.14);
+  --shadow-lg: 0 24px 60px rgb(16 24 40 / 0.22);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-full: 999px;
+
+  --gutter: clamp(1rem, 4vw, 2rem);
+  --header-h: 3.5rem;
+  --tabbar-h: 3.75rem;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #101214;
+    --surface: #181b1e;
+    --surface-2: #222629;
+    --border: #2c3135;
+    --text: #eceff2;
+    --muted: #9aa1ab;
+    --accent: #4fd1b5;
+    --accent-hover: #75dfc8;
+    --accent-contrast: #05231d;
+    --accent-soft: #14312b;
+    --streak: #f5a524;
+    --streak-soft: #3a2a0c;
+    --danger: #f58a80;
+    --danger-soft: #3b1f1c;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 10px 28px rgb(0 0 0 / 0.45);
+    --shadow-lg: 0 24px 60px rgb(0 0 0 / 0.55);
+  }
+}
