@@ -108,7 +108,7 @@ function createReaderView({ book, epub, backHref }) {
     "button",
     { class: "btn btn--ghost", type: "button", onclick: () => go(chapter - 1) },
     icon("chevron-left", { size: 18 }),
-    "Previous",
+    "Prev",
   );
   const nextLabel = h("span");
   const nextButton = h(

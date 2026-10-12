@@ -23,7 +23,7 @@ export const NEW_BOOK_DAYS = 14;
 /** Reaching this percentage marks a book as finished automatically. */
 export const FINISH_THRESHOLD = 99;
 /** Default number of books per page in collection views. */
-export const BOOKS_PER_PAGE = 8;
+export const BOOKS_PER_PAGE = 10;
 
 export const READER_DEFAULTS = Object.freeze({
   font: "serif",

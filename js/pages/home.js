@@ -1,5 +1,4 @@
 import { h, icon } from "../core/dom.js";
-import { daysBetween } from "../core/dates.js";
 import { createBookGrid } from "../components/bookGrid.js";
 import { createContinueList } from "../components/continueList.js";
 import { createGoalCard } from "../components/goalCard.js";
@@ -94,7 +93,7 @@ export function mount({ root, query, router }) {
           h(
             "p",
             { class: "page-header__sub" },
-            "Pick something to read, and keep your daily streak alive.",
+            "Read a book, and keep your daily streak alive.",
           ),
         ),
       ),

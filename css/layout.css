@@ -95,8 +95,6 @@
 }
 
 main {
-  min-height: calc(100dvh - var(--header-h));
-  padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 1.5rem);
   outline: none;
 }
 .page {
@@ -110,7 +108,7 @@ main {
 .page__inner {
   display: grid;
   gap: clamp(1.5rem, 4vw, 2.25rem);
-  padding-block: clamp(1.25rem, 4vw, 2.5rem);
+  padding-top: 2rem;
 }
 
 .page-header {
