@@ -25,6 +25,9 @@ export const FINISH_THRESHOLD = 99;
 /** Default number of books per page in collection views. */
 export const BOOKS_PER_PAGE = 10;
 
+/** Highlights are deliberately short so they fit a quote card. */
+export const HIGHLIGHT = Object.freeze({ minLength: 3, maxLength: 280 });
+
 export const READER_DEFAULTS = Object.freeze({
   font: "serif",
   theme: "paper",

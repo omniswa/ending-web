@@ -10,10 +10,14 @@ import {
   createReaderSettings,
 } from "../components/readerSettings.js";
 import { createToc } from "../components/readerToc.js";
+import { openQuoteCard } from "../components/quoteCardDialog.js";
+import { createSelectionBar } from "../components/selectionBar.js";
 import { errorState } from "../components/status.js";
 import { toast } from "../components/toast.js";
+import { addHighlight } from "../services/highlights.js";
 import { getBookBlob, resolveBook } from "../services/library.js";
 import { openEpub } from "../services/epub/book.js";
+import { getReaderPrefs } from "../services/readerPrefs.js";
 import {
   getProgress,
   markFinished,
@@ -209,6 +213,43 @@ function createReaderView({ book, epub, backHref }) {
     getChapter: () => chapter,
     onSelect: (entry) => go(entry.chapter, { anchor: entry.anchor }),
   });
+
+  // ----- Highlights & quote cards -----
+  function saveHighlight(text, { quiet = false } = {}) {
+    const result = addHighlight({
+      bookId: book.id,
+      bookTitle: book.title,
+      author: book.author,
+      chapter,
+      chapterTitle: epub.titleOf(chapter),
+      text,
+    });
+    if (!result) return null;
+    if (!quiet)
+      toast(
+        result.created ? "Highlight saved" : "Already in your highlights",
+        {
+          action: {
+            label: "View",
+            onClick: () => {
+              location.hash = "#/highlights";
+            },
+          },
+        },
+      );
+    return result.highlight;
+  }
+
+  const selectionBar = createSelectionBar({
+    scope: article,
+    onSave: (text) => saveHighlight(text),
+    onCard: (text) => {
+      const highlight = saveHighlight(text, { quiet: true });
+      if (highlight)
+        openQuoteCard(highlight, { host: el, theme: getReaderPrefs().theme });
+    },
+  });
+  el.append(selectionBar.el);
 
   // ----- Position & progress -----
   const maxScroll = () => scroller.scrollHeight - scroller.clientHeight;
@@ -414,6 +455,7 @@ function createReaderView({ book, epub, backHref }) {
       document.removeEventListener("keydown", onKeydown);
       if (themeMeta && originalThemeColor)
         themeMeta.setAttribute("content", originalThemeColor);
+      selectionBar.destroy();
       settings.destroy();
       toc.destroy();
       epub.destroy();

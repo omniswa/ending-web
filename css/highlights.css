@@ -1,0 +1,103 @@
+/* Highlights: reader selection bar, quote card preview and the highlights list. */
+
+/* ---------- Selection bar (inside the reader, themed by its tokens) ---------- */
+.selection-bar {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--bar-bottom) + env(safe-area-inset-bottom) + 0.75rem);
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: calc(100% - 1.5rem);
+  padding: 0.375rem 0.375rem 0.375rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  transform: translateX(-50%);
+  animation: selection-in 0.18s var(--ease);
+}
+.selection-bar__count {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.selection-bar__count[data-over="true"] {
+  color: var(--danger);
+}
+@keyframes selection-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 0.5rem);
+  }
+}
+@media (max-width: 26rem) {
+  .selection-bar__count {
+    display: none;
+  }
+  .selection-bar {
+    padding-left: 0.375rem;
+  }
+}
+
+/* ---------- Quote card preview ---------- */
+.quote-preview {
+  display: grid;
+  place-items: center;
+  margin-bottom: 1rem;
+}
+.quote-preview__img {
+  width: min(100%, 17rem);
+  height: auto;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-md);
+  transition: opacity 0.15s;
+}
+.quote-preview[data-loading="true"] .quote-preview__img {
+  opacity: 0.5;
+}
+
+/* ---------- Highlights list ---------- */
+.highlights__list {
+  display: grid;
+  gap: 0.875rem;
+}
+.highlight {
+  display: grid;
+  gap: 0.75rem;
+  padding: clamp(1rem, 3vw, 1.25rem);
+}
+.highlight__text {
+  margin: 0;
+  padding-left: 1rem;
+  border-left: 3px solid var(--accent);
+  font: 400 1.0625rem/1.55 var(--font-display);
+  overflow-wrap: anywhere;
+}
+.highlight__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.highlight__book {
+  font-weight: 500;
+}
+.highlight__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.highlight__delete {
+  margin-left: auto;
+  color: var(--muted);
+}
+.highlight__delete:hover {
+  color: var(--danger);
+}

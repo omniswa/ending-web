@@ -5,6 +5,7 @@
  */
 import {
   GOAL,
+  HIGHLIGHT,
   READER_DEFAULTS,
   READER_OPTIONS,
   READER_RANGES,
@@ -24,6 +25,7 @@ export function createDefaultState() {
     goal: { minutes: GOAL.default, startedOn: todayKey() },
     days: {},
     reader: { ...READER_DEFAULTS },
+    highlights: [],
   };
 }
 
@@ -71,6 +73,37 @@ function normalizeDays(raw) {
   return out;
 }
 
+const asString = (value, fallback = "") =>
+  typeof value === "string" ? value : fallback;
+
+/** Newest first. Entries with unusable text or duplicate ids are dropped. */
+function normalizeHighlights(raw) {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const entry of raw) {
+    if (!isObject(entry)) continue;
+    const id = asString(entry.id);
+    const bookId = asString(entry.bookId);
+    const text = asString(entry.text).replace(/\s+/g, " ").trim();
+    if (!id || !bookId || seen.has(id)) continue;
+    if (text.length < HIGHLIGHT.minLength || text.length > HIGHLIGHT.maxLength)
+      continue;
+    seen.add(id);
+    out.push({
+      id,
+      bookId,
+      bookTitle: asString(entry.bookTitle, "Untitled"),
+      author: asString(entry.author, "Unknown author"),
+      chapter: Math.max(0, Math.floor(finiteOr(entry.chapter, 0))),
+      chapterTitle: asString(entry.chapterTitle),
+      text,
+      createdAt: finiteOr(entry.createdAt, 0),
+    });
+  }
+  return out.sort((a, b) => b.createdAt - a.createdAt);
+}
+
 export function normalizeState(raw) {
   const base = createDefaultState();
   if (!isObject(raw)) return base;
@@ -97,5 +130,6 @@ export function normalizeState(raw) {
     },
     days: normalizeDays(raw.days),
     reader: normalizeReader(raw.reader),
+    highlights: normalizeHighlights(raw.highlights),
   };
 }
