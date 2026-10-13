@@ -2,8 +2,9 @@
  * Reader page. The chapter lives in a scroll container; progress is stored as
  * (chapter, scroll fraction) so it survives font-size or window changes.
  */
-import { APP_NAME } from "../config.js";
+import { APP_NAME, HIGHLIGHT } from "../config.js";
 import { h, icon } from "../core/dom.js";
+import { paintHighlights } from "../core/highlightDom.js";
 import { clamp, debounce, rafThrottle } from "../core/utils.js";
 import {
   applyReaderPrefs,
@@ -14,7 +15,13 @@ import { openQuoteCard } from "../components/quoteCardDialog.js";
 import { createSelectionBar } from "../components/selectionBar.js";
 import { errorState } from "../components/status.js";
 import { toast } from "../components/toast.js";
-import { addHighlight } from "../services/highlights.js";
+import {
+  addHighlight,
+  getHighlights,
+  removeHighlight,
+  restoreHighlight,
+  setHighlightColor,
+} from "../services/highlights.js";
 import { getBookBlob, resolveBook } from "../services/library.js";
 import { openEpub } from "../services/epub/book.js";
 import { getReaderPrefs } from "../services/readerPrefs.js";
@@ -215,41 +222,75 @@ function createReaderView({ book, epub, backHref }) {
   });
 
   // ----- Highlights & quote cards -----
-  function saveHighlight(text, { quiet = false } = {}) {
-    const result = addHighlight({
+  let lastColor = HIGHLIGHT.defaultColor;
+
+  /** Paints this chapter's saved highlights into the text. */
+  const paint = () =>
+    paintHighlights(
+      article,
+      getHighlights().filter(
+        (item) => item.bookId === book.id && item.chapter === chapter,
+      ),
+    );
+
+  function saveHighlight({ text, anchor, color }) {
+    return addHighlight({
       bookId: book.id,
       bookTitle: book.title,
       author: book.author,
       chapter,
       chapterTitle: epub.titleOf(chapter),
       text,
+      color,
+      offset: anchor?.offset,
+      prefix: anchor?.prefix,
     });
-    if (!result) return null;
-    if (!quiet)
-      toast(
-        result.created ? "Highlight saved" : "Already in your highlights",
-        {
-          action: {
-            label: "View",
-            onClick: () => {
-              location.hash = "#/highlights";
-            },
-          },
-        },
-      );
-    return result.highlight;
   }
 
   const selectionBar = createSelectionBar({
     scope: article,
-    onSave: (text) => saveHighlight(text),
-    onCard: (text) => {
-      const highlight = saveHighlight(text, { quiet: true });
-      if (highlight)
-        openQuoteCard(highlight, { host: el, theme: getReaderPrefs().theme });
+    onHighlight: ({ text, anchor, color }) => {
+      lastColor = color;
+      const result = saveHighlight({ text, anchor, color });
+      if (!result) return;
+      if (result.highlight.color !== color)
+        setHighlightColor(result.highlight.id, color);
+      toast(result.created ? "Highlight saved" : "Highlight updated", {
+        action: {
+          label: "View all",
+          onClick: () => {
+            location.hash = "#/highlights";
+          },
+        },
+      });
+    },
+    onCard: ({ text, anchor, highlight }) => {
+      const saved =
+        highlight ?? saveHighlight({ text, anchor, color: lastColor })?.highlight;
+      if (saved)
+        openQuoteCard(saved, { host: el, theme: getReaderPrefs().theme });
+    },
+    onRecolor: ({ highlight, color }) => {
+      lastColor = color;
+      setHighlightColor(highlight.id, color);
+    },
+    onRemove: ({ highlight }) => {
+      removeHighlight(highlight.id);
+      toast("Highlight removed", {
+        action: { label: "Undo", onClick: () => restoreHighlight(highlight) },
+      });
     },
   });
   el.append(selectionBar.el);
+
+  // Repaint whenever highlights change (added, recolored, removed, restored).
+  const stopHighlights = subscribeSelect(
+    (s) => s.highlights,
+    () => {
+      if (started) paint();
+    },
+    { immediate: false },
+  );
 
   // ----- Position & progress -----
   const maxScroll = () => scroller.scrollHeight - scroller.clientHeight;
@@ -320,6 +361,8 @@ function createReaderView({ book, epub, backHref }) {
       if (mine !== token || destroyed) return;
       article.replaceChildren(...node.childNodes);
       chapter = index;
+      selectionBar.dismiss();
+      paint();
       updateChapterUi();
       setChrome(true);
       scroller.scrollTop = 0;
@@ -374,8 +417,18 @@ function createReaderView({ book, epub, backHref }) {
         findAnchor(anchor)?.scrollIntoView({ block: "start" });
       return;
     }
-    if (!window.getSelection()?.toString())
-      setChrome(el.dataset.chrome !== "visible");
+    if (window.getSelection()?.toString()) return;
+    // Tapping a painted highlight opens its color / remove / quote card bar.
+    const mark = event.target.closest("mark[data-hl]");
+    const tapped = mark
+      ? getHighlights().find((item) => item.id === mark.dataset.hl)
+      : null;
+    if (tapped) {
+      selectionBar.showFor(tapped);
+      return;
+    }
+    selectionBar.dismiss();
+    setChrome(el.dataset.chrome !== "visible");
   };
 
   const onKeydown = (event) => {
@@ -455,6 +508,7 @@ function createReaderView({ book, epub, backHref }) {
       document.removeEventListener("keydown", onKeydown);
       if (themeMeta && originalThemeColor)
         themeMeta.setAttribute("content", originalThemeColor);
+      stopHighlights();
       selectionBar.destroy();
       settings.destroy();
       toc.destroy();

@@ -98,6 +98,15 @@ function normalizeHighlights(raw) {
       chapter: Math.max(0, Math.floor(finiteOr(entry.chapter, 0))),
       chapterTitle: asString(entry.chapterTitle),
       text,
+      color: HIGHLIGHT.colors.some((c) => c.value === entry.color)
+        ? entry.color
+        : HIGHLIGHT.defaultColor,
+      // Where the passage sits in its chapter (whitespace-free character offset
+      // and the characters just before it); -1 means unknown.
+      offset: Number.isFinite(entry.offset)
+        ? Math.max(0, Math.floor(entry.offset))
+        : -1,
+      prefix: asString(entry.prefix).slice(-24),
       createdAt: finiteOr(entry.createdAt, 0),
     });
   }
