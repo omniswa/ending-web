@@ -34,4 +34,22 @@ export const routes = [
     title: "Reading",
     load: () => import("./pages/reader.js"),
   },
+  {
+    name: "about",
+    path: "/about",
+    title: "About",
+    load: () => import("./pages/about.js"),
+  },
+  {
+    name: "terms",
+    path: "/terms",
+    title: "Terms",
+    load: () => import("./pages/terms.js"),
+  },
+  {
+    name: "privacy",
+    path: "/privacy",
+    title: "Privacy",
+    load: () => import("./pages/privacy.js"),
+  },
 ];

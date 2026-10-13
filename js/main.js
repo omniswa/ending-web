@@ -1,6 +1,7 @@
 import { createRouter } from "./core/router.js";
 import { h, icon } from "./core/dom.js";
 import { createNav } from "./components/nav.js";
+import { createDrawer } from "./components/drawer.js";
 import { openDataDialog } from "./components/dataDialog.js";
 import { emptyState } from "./components/status.js";
 import { toast } from "./components/toast.js";
@@ -40,6 +41,10 @@ dataButton.prepend(icon("database", { size: 18 }));
 dataButton.addEventListener("click", () =>
   openDataDialog({ onRestored: () => router.reload() }),
 );
+
+// Drawer: mobile-only secondary nav (About, Terms, Privacy)
+const drawer = createDrawer();
+document.querySelector(".app-header__inner").append(drawer.trigger);
 
 // Saving can fail (storage full, private browsing). Say so, but not on every attempt.
 const SAVE_WARNING_COOLDOWN_MS = 30_000;

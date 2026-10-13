@@ -758,7 +758,7 @@
 .dialog {
   width: 100%;
   max-width: 100%;
-  max-height: min(88dvh, 44rem);
+  max-height: min(98dvh, 44rem);
   margin: auto auto 0;
   padding: 0;
   overflow: hidden;
@@ -1033,4 +1033,3 @@ body[data-route="reader"] #toasts {
     height: 2rem;
   }
 }
-

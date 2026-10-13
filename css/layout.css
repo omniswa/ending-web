@@ -191,7 +191,129 @@ main {
   color: var(--muted);
 }
 
+/* ---------- Drawer (mobile secondary nav) ---------- */
+.drawer__trigger {
+  /* Shown only on mobile; hidden once the top nav appears */
+  display: inline-flex;
+  align-items: center;
+}
+
+.drawer {
+  /* Position as a left-side panel; fill full height */
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: min(80vw, 18rem);
+  max-width: 100%;
+  max-height: none;
+  height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.drawer[open] {
+  display: flex;
+  flex-direction: column;
+  animation: drawer-in 0.25s var(--ease);
+}
+.drawer::backdrop {
+  background: rgb(8 10 12 / 0.5);
+  backdrop-filter: blur(2px);
+}
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(-1.5rem);
+  }
+}
+.drawer__inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0.75rem 0.5rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  min-height: var(--header-h);
+}
+.drawer__title {
+  font: 600 1rem/1 var(--font-display);
+}
+.drawer__nav {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  gap: 0.25rem;
+}
+.drawer__link {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+.drawer__link:hover {
+  background: var(--surface-2);
+}
+.drawer__link[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Footer — desktop only; drawer covers the links on mobile */
+.app-footer {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding-block: 1.5rem;
+  margin-top: auto;
+}
+.app-footer__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.app-footer__copy {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.app-footer__nav {
+  display: flex;
+  gap: 1.25rem;
+}
+.app-footer__link {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.app-footer__link:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 @media (min-width: 48rem) {
+  .drawer__trigger {
+    display: none; /* top nav visible — no need for drawer */
+  }
   .nav {
     display: flex;
   }
@@ -200,6 +322,9 @@ main {
   }
   main {
     padding-bottom: 3rem;
+  }
+  .app-footer {
+    display: block; /* revealed on desktop; drawer handles mobile */
   }
 }
 @media (min-width: 60rem) {
@@ -211,7 +336,8 @@ main {
 
 /* The reader is full-screen: hide the app shell. */
 body[data-route="reader"] .app-header,
-body[data-route="reader"] .tabbar {
+body[data-route="reader"] .tabbar,
+body[data-route="reader"] .app-footer {
   display: none;
 }
 body[data-route="reader"] main {
