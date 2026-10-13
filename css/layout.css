@@ -109,8 +109,13 @@ main {
   display: grid;
   gap: clamp(1.5rem, 4vw, 2.25rem);
   padding-top: 2rem;
+  padding-bottom: 6.5rem;
 }
-
+@media screen and (min-width: 700px) {
+  .page__inner {
+    padding-bottom: 0;
+  }
+}
 .page-header {
   display: flex;
   align-items: flex-end;
