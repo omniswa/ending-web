@@ -5,7 +5,7 @@ import { resetReaderPrefs, setReaderPref } from "../services/readerPrefs.js";
 import { subscribeSelect } from "../state/store.js";
 import { createDialog } from "./dialog.js";
 import { createSegmented } from "./segmented.js";
-import { createSlider } from "./slider.js";
+import { createStepper } from "./stepper.js";
 
 const FORMATS = {
   size: (v) => `${v}px`,
@@ -40,12 +40,12 @@ export function createReaderSettings({ host }) {
     syncers.push((prefs) => control.set(prefs[key]));
     return control.el;
   };
-  const slider = (key) => {
+  const stepper = (key) => {
     const range = READER_RANGES[key];
-    const control = createSlider({
+    const control = createStepper({
       ...range,
       format: FORMATS[key],
-      onInput: (value) => setReaderPref(key, value),
+      onChange: (value) => setReaderPref(key, value),
     });
     syncers.push((prefs) => control.set(prefs[key]));
     return control.el;
@@ -84,11 +84,11 @@ export function createReaderSettings({ host }) {
     group(
       "Text",
       segmented("align", "Text alignment", "default"),
-      slider("size"),
-      slider("lineHeight"),
-      slider("letterSpacing"),
+      stepper("size"),
+      stepper("lineHeight"),
+      stepper("letterSpacing"),
     ),
-    group("Layout", slider("padding")),
+    group("Layout", stepper("padding")),
   );
   dialog.footer.append(
     h(

@@ -718,24 +718,24 @@
   background: linear-gradient(135deg, #000 50%, #c9c9c9 50%);
 }
 
-/* ---------- Slider ---------- */
-.slider__head {
+/* ---------- Labelled stepper row (reader settings) ---------- */
+.stepper-row {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   font-size: 0.875rem;
-  margin-bottom: 0.25rem;
 }
-.slider__value {
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
+.stepper-row__label {
+  min-width: 0;
 }
-.slider__input {
-  width: 100%;
-  height: 1.75rem;
-  margin: 0;
-  accent-color: var(--accent);
-  cursor: pointer;
+.stepper-row .stepper {
+  flex: none;
+}
+.stepper-row .stepper__btn {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .setting {
