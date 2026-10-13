@@ -2,7 +2,7 @@
  * Renders a highlight as a shareable quote card (PNG) on a canvas, and shares
  * or downloads it. Pure canvas drawing: no fonts or images are fetched.
  */
-import { APP_NAME } from "../config.js";
+import { APP_NAME, HIGHLIGHT } from "../config.js";
 import { downloadBlob } from "../core/utils.js";
 
 export const CARD_THEMES = Object.freeze({
@@ -96,7 +96,12 @@ const toBlob = (canvas) =>
 
 /** @returns {Promise<Blob>} a 1080×1350 PNG. */
 export async function renderQuoteCard(highlight, themeName = "paper") {
-  const theme = CARD_THEMES[themeName] ?? CARD_THEMES.paper;
+  const base = CARD_THEMES[themeName] ?? CARD_THEMES.paper;
+  // The quote mark and divider take the highlight's color.
+  const accent =
+    HIGHLIGHT.colors.find((c) => c.value === highlight.color)?.hex ??
+    base.accent;
+  const theme = { ...base, accent };
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
   canvas.height = HEIGHT;

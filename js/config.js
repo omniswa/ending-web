@@ -26,7 +26,18 @@ export const FINISH_THRESHOLD = 99;
 export const BOOKS_PER_PAGE = 10;
 
 /** Highlights are deliberately short so they fit a quote card. */
-export const HIGHLIGHT = Object.freeze({ minLength: 3, maxLength: 280 });
+export const HIGHLIGHT = Object.freeze({
+  minLength: 3,
+  maxLength: 280,
+  defaultColor: "yellow",
+  /** `hex` is used on quote cards; keep it in sync with the --hl-* tokens in css/highlights.css. */
+  colors: Object.freeze([
+    { value: "yellow", label: "Yellow", hex: "#e5a900" },
+    { value: "green", label: "Green", hex: "#2fa66b" },
+    { value: "blue", label: "Blue", hex: "#3b82f6" },
+    { value: "pink", label: "Pink", hex: "#e5487f" },
+  ]),
+});
 
 export const READER_DEFAULTS = Object.freeze({
   font: "serif",

@@ -1,4 +1,44 @@
-/* Highlights: reader selection bar, quote card preview and the highlights list. */
+/* Highlights: colors, painted text, reader selection bar, quote card preview and the list. */
+
+/* Keep in sync with HIGHLIGHT.colors in js/config.js. */
+:root {
+  --hl-yellow: #e5a900;
+  --hl-green: #2fa66b;
+  --hl-blue: #3b82f6;
+  --hl-pink: #e5487f;
+}
+[data-color="yellow"] {
+  --c: var(--hl-yellow);
+}
+[data-color="green"] {
+  --c: var(--hl-green);
+}
+[data-color="blue"] {
+  --c: var(--hl-blue);
+}
+[data-color="pink"] {
+  --c: var(--hl-pink);
+}
+
+/* ---------- Highlighted text inside the book ---------- */
+.prose mark[data-hl] {
+  padding: 0.05em 0;
+  border-radius: 0.2em;
+  background: color-mix(in srgb, var(--c, var(--hl-yellow)) 38%, transparent);
+  color: inherit;
+  cursor: pointer;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.reader[data-theme="dark"] .prose mark[data-hl],
+.reader[data-theme="oled"] .prose mark[data-hl] {
+  background: color-mix(in srgb, var(--c, var(--hl-yellow)) 48%, transparent);
+}
+/* A <mark> that comes from the book itself should not look like a highlight. */
+.prose mark:not([data-hl]) {
+  background: transparent;
+  color: inherit;
+}
 
 /* ---------- Selection bar (inside the reader, themed by its tokens) ---------- */
 .selection-bar {
@@ -25,6 +65,35 @@
   white-space: nowrap;
 }
 .selection-bar__count[data-over="true"] {
+  color: var(--danger);
+}
+.selection-bar__swatch {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 0 1px var(--border);
+  transition: transform 0.15s var(--ease);
+}
+.selection-bar__swatch:hover:not(:disabled) {
+  transform: scale(1.08);
+}
+.selection-bar__swatch:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.selection-bar__swatch[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px var(--text);
+}
+.selection-bar__remove {
+  width: 2rem;
+  height: 2rem;
+  color: var(--muted);
+}
+.selection-bar__remove:hover {
   color: var(--danger);
 }
 @keyframes selection-in {
@@ -74,7 +143,7 @@
 .highlight__text {
   margin: 0;
   padding-left: 1rem;
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--c, var(--accent));
   font: 400 1.0625rem/1.55 var(--font-display);
   overflow-wrap: anywhere;
 }

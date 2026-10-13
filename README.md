@@ -19,9 +19,9 @@ python3 -m http.server 8000      # or: npx serve
 |------|-----------|--------------|
 | Home | `#/` | Browse `books.json` in cards (hover/tap overlay: favorite, share, read, progress), search + sort, **daily goal + streak**, **continue reading** (favorited books in progress) |
 | Favorites | `#/favorites` | Same grid; read / continue / read again, unfavorite (with undo), mark finished, share, filter by status |
-| Highlights | `#/highlights` | Short passages (3–280 characters) saved from the reader; turn any of them into a **quote card** (1080×1350 PNG, four themes) to share or download; filter by book, remove with undo |
+| Highlights | `#/highlights` | Short passages (3–280 characters) saved from the reader; turn any of them into a **quote card** (1080×1350 PNG, four themes) to share or download; filter by book, remove with undo. Each is stored with a color and its position in the chapter so it can be painted back into the book |
 | My books | `#/library` | Import your own `.epub` files (picker or drag & drop); stored privately in IndexedDB |
-| Reader | `#/read/:id` | Font (sans/serif/mono), theme (paper/sepia/dark/OLED), alignment, text size, line + letter spacing, page padding, reset; contents panel; auto-hiding chrome; keyboard ←/→ for chapters; **select text → Highlight or Quote card** |
+| Reader | `#/read/:id` | Font (sans/serif/mono), theme (paper/sepia/dark/OLED), alignment, text size, line + letter spacing, page padding, reset; contents panel; auto-hiding chrome; keyboard ←/→ for chapters; **select text → pick a highlight color (yellow/green/blue/pink) or make a Quote card**; highlights are painted into the text, tap one to recolor, remove or share it |
 | Backup | header button | Export/import progress + settings, optionally including imported books |
 
 **Streaks:** reading time is counted only while the reader is open, visible and recently touched

@@ -60,7 +60,11 @@ export function mount({ root }) {
     return h(
       "li",
       { class: "card highlight" },
-      h("blockquote", { class: "highlight__text" }, highlight.text),
+      h(
+        "blockquote",
+        { class: "highlight__text", dataset: { color: highlight.color } },
+        highlight.text,
+      ),
       h(
         "p",
         { class: "highlight__meta" },
