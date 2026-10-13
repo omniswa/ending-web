@@ -19,8 +19,9 @@ python3 -m http.server 8000      # or: npx serve
 |------|-----------|--------------|
 | Home | `#/` | Browse `books.json` in cards (hover/tap overlay: favorite, share, read, progress), search + sort, **daily goal + streak**, **continue reading** (favorited books in progress) |
 | Favorites | `#/favorites` | Same grid; read / continue / read again, unfavorite (with undo), mark finished, share, filter by status |
+| Highlights | `#/highlights` | Short passages (3–280 characters) saved from the reader; turn any of them into a **quote card** (1080×1350 PNG, four themes) to share or download; filter by book, remove with undo |
 | My books | `#/library` | Import your own `.epub` files (picker or drag & drop); stored privately in IndexedDB |
-| Reader | `#/read/:id` | Font (sans/serif/mono), theme (paper/sepia/dark/OLED), alignment, text size, line + letter spacing, page padding, reset; contents panel; auto-hiding chrome; keyboard ←/→ for chapters |
+| Reader | `#/read/:id` | Font (sans/serif/mono), theme (paper/sepia/dark/OLED), alignment, text size, line + letter spacing, page padding, reset; contents panel; auto-hiding chrome; keyboard ←/→ for chapters; **select text → Highlight or Quote card** |
 | Backup | header button | Export/import progress + settings, optionally including imported books |
 
 **Streaks:** reading time is counted only while the reader is open, visible and recently touched
@@ -47,10 +48,10 @@ js/
   core/               dom (h/icon), router, store, db (IndexedDB), dates, utils
   state/              schema (defaults + validation), store (localStorage persistence)
   services/           catalog, library, progress, favorites, goals, readerPrefs,
-                      readingTimer, share, backup
+                      readingTimer, share, backup, highlights, quoteCard (canvas → PNG)
   services/epub/      zip, paths, sanitize, book (OPF/TOC parsing, chapter loading)
   components/         bookCard, bookGrid, goalCard, continueList, dialog, toast, …
-  pages/              home, favorites, library, reader  (each exports mount() → cleanup)
+  pages/              home, favorites, highlights, library, reader  (each exports mount() → cleanup)
 ```
 
 Principles: pages own their lifecycle (`mount` returns cleanup); components never fetch;

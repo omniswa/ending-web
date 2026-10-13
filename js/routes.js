@@ -15,6 +15,13 @@ export const routes = [
     load: () => import("./pages/favorites.js"),
   },
   {
+    name: "highlights",
+    path: "/highlights",
+    title: "Highlights",
+    nav: { label: "Highlights", icon: "quote", href: "#/highlights" },
+    load: () => import("./pages/highlights.js"),
+  },
+  {
     name: "library",
     path: "/library",
     title: "My books",
