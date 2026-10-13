@@ -23,7 +23,9 @@ export function createSelectionBar({
   onRemove,
 }) {
   let text = "";
-  let anchor = null;
+  // The selected range is only remembered while selecting; its position in the
+  // chapter (an O(chapter) measurement) is computed once, when it is needed.
+  let selectedRange = null;
   let existing = null;
   let hideTimer = null;
 
@@ -110,7 +112,7 @@ export function createSelectionBar({
       return;
     }
     if (!isValidHighlightLength(text)) return;
-    const picked = { text, anchor, color };
+    const picked = { text, anchor: currentAnchor(), color };
     finishSelection();
     onHighlight(picked);
   }
@@ -123,9 +125,19 @@ export function createSelectionBar({
       return;
     }
     if (!isValidHighlightLength(text)) return;
-    const picked = { text, anchor, highlight: null };
+    const picked = { text, anchor: currentAnchor(), highlight: null };
     finishSelection();
     onCard(picked);
+  }
+
+  /** Measures where the remembered selection starts in the chapter. */
+  function currentAnchor() {
+    if (!selectedRange) return null;
+    try {
+      return anchorOf(scope, selectedRange);
+    } catch {
+      return null;
+    }
   }
 
   function readSelection() {
@@ -135,7 +147,7 @@ export function createSelectionBar({
     if (!scope.contains(range.commonAncestorContainer)) return null;
     return {
       text: cleanHighlightText(selection.toString()),
-      anchor: anchorOf(scope, range),
+      range: range.cloneRange(),
     };
   }
 
@@ -151,7 +163,7 @@ export function createSelectionBar({
     clearTimeout(hideTimer);
     existing = null;
     text = found.text;
-    anchor = found.anchor;
+    selectedRange = found.range;
     const valid = isValidHighlightLength(text);
     count.hidden = false;
     count.textContent = valid

@@ -3,7 +3,8 @@ import { h, icon } from "./core/dom.js";
 import { createNav } from "./components/nav.js";
 import { openDataDialog } from "./components/dataDialog.js";
 import { emptyState } from "./components/status.js";
-import "./state/store.js"; // hydrates persisted state before any page renders
+import { toast } from "./components/toast.js";
+import { onPersistError, storeReady } from "./state/store.js";
 import { routes } from "./routes.js";
 
 const nav = createNav(routes, {
@@ -40,4 +41,15 @@ dataButton.addEventListener("click", () =>
   openDataDialog({ onRestored: () => router.reload() }),
 );
 
-router.start();
+// Saving can fail (storage full, private browsing). Say so, but not on every attempt.
+const SAVE_WARNING_COOLDOWN_MS = 30_000;
+let lastSaveWarning = 0;
+onPersistError(() => {
+  const now = Date.now();
+  if (now - lastSaveWarning < SAVE_WARNING_COOLDOWN_MS) return;
+  lastSaveWarning = now;
+  toast("Your changes could not be saved. Browser storage may be full or blocked.");
+});
+
+// Start once highlights are loaded so pages never flash an empty state.
+storeReady.then(() => router.start());

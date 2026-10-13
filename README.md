@@ -59,7 +59,10 @@ services never touch the DOM (except toasts); all persisted data passes through
 `normalizeState`; book markup is sanitized and styled only by the reader's own CSS.
 
 **Storage:** small state (favorites, progress, goal, days, prefs) → `localStorage`;
-binary data (imported EPUBs, covers) → IndexedDB.
+highlights (unbounded) and binary data (imported EPUBs, covers) → IndexedDB. Highlights stay
+in the in-memory store and are written to IndexedDB as per-item diffs; they only leave
+`localStorage` after IndexedDB has confirmed a write, and fall back to it if IndexedDB fails.
+If saving fails entirely, a toast says so.
 
 ## Notes
 

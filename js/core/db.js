@@ -13,7 +13,15 @@ function open() {
           db.createObjectStore(name, { keyPath: "id" });
       }
     };
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      const db = request.result;
+      // Let a newer version of the app (in another tab) upgrade the database.
+      db.onversionchange = () => {
+        db.close();
+        connection = null;
+      };
+      resolve(db);
+    };
     request.onerror = () => {
       connection = null;
       reject(request.error);

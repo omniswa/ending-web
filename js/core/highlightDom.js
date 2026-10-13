@@ -97,16 +97,28 @@ export function clearHighlights(root) {
  */
 export function paintHighlights(root, highlights) {
   clearHighlights(root);
-  let painted = 0;
+  let index = buildIndex(root);
+
+  // Locate every highlight against one snapshot of the chapter's text.
+  const found = [];
   for (const highlight of highlights) {
     const needle = strip(highlight.text);
     if (!needle) continue;
-    // Rebuilt each time: wrapping splits text nodes, which invalidates the index.
-    const index = buildIndex(root);
     const start = locate(index, needle, highlight);
-    if (start < 0) continue;
-    wrap(index, start, needle.length, highlight);
-    painted++;
+    if (start >= 0) found.push({ highlight, start, length: needle.length });
   }
-  return painted;
+
+  // Wrap from the end of the chapter backwards. Splitting a text node only
+  // moves its tail into a new node, so everything before the split keeps its
+  // position and the same index stays valid. Overlapping ranges are the
+  // exception (their characters already moved into new nodes), so those get a
+  // fresh index first. Cost is one index build, plus one per overlap.
+  found.sort((a, b) => b.start - a.start);
+  let floor = Infinity;
+  for (const { highlight, start, length } of found) {
+    if (start + length > floor) index = buildIndex(root);
+    wrap(index, start, length, highlight);
+    floor = start;
+  }
+  return found.length;
 }

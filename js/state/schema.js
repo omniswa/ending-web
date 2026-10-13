@@ -77,7 +77,7 @@ const asString = (value, fallback = "") =>
   typeof value === "string" ? value : fallback;
 
 /** Newest first. Entries with unusable text or duplicate ids are dropped. */
-function normalizeHighlights(raw) {
+export function normalizeHighlights(raw) {
   if (!Array.isArray(raw)) return [];
   const seen = new Set();
   const out = [];

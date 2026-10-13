@@ -11,8 +11,12 @@ export const CATALOG_URL = "books.json";
 
 export const DB = Object.freeze({
   name: "3nding",
-  version: 1,
-  stores: Object.freeze({ books: "books", files: "files" }),
+  version: 2,
+  stores: Object.freeze({
+    books: "books",
+    files: "files",
+    highlights: "highlights",
+  }),
 });
 
 export const GOAL = Object.freeze({ min: 5, max: 240, step: 5, default: 15 });
