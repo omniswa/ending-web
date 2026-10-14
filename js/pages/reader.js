@@ -1,6 +1,9 @@
 /**
  * Reader page. The chapter lives in a scroll container; progress is stored as
  * (chapter, scroll fraction) so it survives font-size or window changes.
+ *
+ * Opening the reader with `?hl=<highlightId>` jumps to that highlight and
+ * leaves the saved reading progress untouched for the visit.
  */
 import { APP_NAME, HIGHLIGHT } from "../config.js";
 import { h, icon } from "../core/dom.js";
@@ -36,7 +39,7 @@ import { subscribeSelect } from "../state/store.js";
 const RESTORE_WINDOW_MS = 1200;
 const SAVE_DELAY_MS = 600;
 
-export async function mount({ root, params, router }) {
+export async function mount({ root, params, query, router }) {
   root.replaceChildren(
     h(
       "div",
@@ -89,22 +92,43 @@ export async function mount({ root, params, router }) {
     return null;
   }
 
+  // Opened from the Highlights page: find the highlight to jump to.
+  const target = query?.hl
+    ? getHighlights().find(
+        (item) => item.id === query.hl && item.bookId === book.id,
+      )
+    : null;
+  const jump = target
+    ? { highlightId: target.id, chapter: target.chapter }
+    : null;
+
   document.title = `${book.title} · ${APP_NAME}`;
-  const view = createReaderView({ book, epub, backHref: router.backHref() });
+  const view = createReaderView({
+    book,
+    epub,
+    backHref: router.backHref(),
+    jump,
+  });
   root.replaceChildren(view.el);
   view.start();
   return { unmount: view.destroy };
 }
 
-function createReaderView({ book, epub, backHref }) {
+function createReaderView({ book, epub, backHref, jump }) {
   const lastIndex = epub.spine.length - 1;
   const saved = getProgress(book.id);
-  let chapter = clamp(saved.chapter, 0, lastIndex);
-  let current = { chapter, offset: saved.offset, percent: saved.percent };
+  let chapter = clamp(jump ? jump.chapter : saved.chapter, 0, lastIndex);
+  let current = {
+    chapter,
+    offset: jump ? 0 : saved.offset,
+    percent: jump ? epub.percentAt(chapter, 0) : saved.percent,
+  };
+  let trackProgress = !jump; // false while viewing a highlight
   let token = 0;
   let lastScrollTop = 0;
   let restoring = false;
   let restoreOffset = 0;
+  let restoreTarget = null;
   let restoreTimer = null;
   let started = false;
   let destroyed = false;
@@ -265,10 +289,14 @@ function createReaderView({ book, epub, backHref }) {
       });
     },
     onCard: ({ text, anchor, highlight }) => {
-      const saved =
-        highlight ?? saveHighlight({ text, anchor, color: lastColor })?.highlight;
-      if (saved)
-        openQuoteCard(saved, { host: el, theme: getReaderPrefs().theme });
+      const savedHighlight =
+        highlight ??
+        saveHighlight({ text, anchor, color: lastColor })?.highlight;
+      if (savedHighlight)
+        openQuoteCard(savedHighlight, {
+          host: el,
+          theme: getReaderPrefs().theme,
+        });
     },
     onRecolor: ({ highlight, color }) => {
       lastColor = color;
@@ -301,21 +329,43 @@ function createReaderView({ book, epub, backHref }) {
     lastScrollTop = scroller.scrollTop;
   }
 
+  /** Re-applies the held position: a focused element if set, else the offset. */
+  function reapply() {
+    if (restoreTarget?.isConnected) {
+      restoreTarget.scrollIntoView({ block: "center" });
+      lastScrollTop = scroller.scrollTop;
+    } else {
+      applyOffset(restoreOffset);
+    }
+  }
+
   /** Holds the scroll position steady while content settles (images loading, font changes). */
   function beginRestore(offset) {
+    restoreTarget = null;
     restoring = true;
     restoreOffset = offset;
     applyOffset(offset);
     clearTimeout(restoreTimer);
     restoreTimer = setTimeout(endRestore, RESTORE_WINDOW_MS);
   }
+
+  /** Same, but keeps a specific element (a highlight) centered. */
+  function beginFocus(element) {
+    restoreTarget = element;
+    restoring = true;
+    reapply();
+    clearTimeout(restoreTimer);
+    restoreTimer = setTimeout(endRestore, RESTORE_WINDOW_MS);
+  }
+
   function endRestore() {
     restoring = false;
+    restoreTarget = null;
     clearTimeout(restoreTimer);
   }
 
   const saveNow = () => {
-    if (destroyed || !started) return;
+    if (destroyed || !started || !trackProgress) return;
     const finishedNow = saveLocation(book.id, current);
     if (finishedNow) toast("You finished this book. Nice work!");
   };
@@ -353,7 +403,10 @@ function createReaderView({ book, epub, backHref }) {
   });
 
   // ----- Navigation -----
-  async function showChapter(index, { offset = 0, anchor = "" } = {}) {
+  async function showChapter(
+    index,
+    { offset = 0, anchor = "", highlightId = "" } = {},
+  ) {
     const mine = ++token;
     el.dataset.loading = "true";
     try {
@@ -366,8 +419,13 @@ function createReaderView({ book, epub, backHref }) {
       updateChapterUi();
       setChrome(true);
       scroller.scrollTop = 0;
+      const mark = highlightId
+        ? article.querySelector(`mark[data-hl="${CSS.escape(highlightId)}"]`)
+        : null;
       const target = anchor ? findAnchor(anchor) : null;
-      if (target) {
+      if (mark) {
+        beginFocus(mark);
+      } else if (target) {
         target.scrollIntoView({ block: "start" });
         lastScrollTop = scroller.scrollTop;
       } else if (offset > 0) {
@@ -444,8 +502,8 @@ function createReaderView({ book, epub, backHref }) {
 
   const userEvents = ["wheel", "touchstart", "pointerdown", "keydown"];
   const onUserInput = () => endRestore();
-  // Images finishing after restore would shift the layout; re-apply the saved position.
-  const onContentLoad = () => restoring && applyOffset(restoreOffset);
+  // Images finishing after restore would shift the layout; re-apply the held position.
+  const onContentLoad = () => restoring && reapply();
 
   scroller.addEventListener("scroll", onScroll, { passive: true });
   article.addEventListener("click", onArticleClick);
@@ -491,7 +549,23 @@ function createReaderView({ book, epub, backHref }) {
       started = true;
       syncThemeColor();
       updateChapterUi();
-      showChapter(chapter, { offset: saved.offset });
+      if (jump) {
+        showChapter(chapter, { highlightId: jump.highlightId });
+        toast("Opened from a highlight.", {
+          duration: 8000,
+          action: {
+            label: "Go to saved progress",
+            onClick: () => {
+              trackProgress = true;
+              showChapter(clamp(saved.chapter, 0, lastIndex), {
+                offset: saved.offset,
+              });
+            },
+          },
+        });
+      } else {
+        showChapter(chapter, { offset: saved.offset });
+      }
       scroller.focus({ preventScroll: true });
     },
     destroy() {

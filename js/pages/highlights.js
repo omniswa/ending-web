@@ -115,7 +115,7 @@ export function mount({ root, query, router }) {
           "a",
           {
             class: "btn btn--ghost btn--sm",
-            href: `#/read/${encodeURIComponent(highlight.bookId)}`,
+            href: `#/read/${encodeURIComponent(highlight.bookId)}?hl=${encodeURIComponent(highlight.id)}`,
           },
           icon("book-open", { size: 16 }),
           "Open book",
