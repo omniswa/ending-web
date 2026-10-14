@@ -19,6 +19,9 @@ const SORTERS = {
 export function mount({ root, query, router }) {
   const goal = createGoalCard();
   const continueList = createContinueList();
+  // Set to false on unmount so async work that finishes later does nothing
+  // (no stray grid/subscription, no URL rewrite on whatever page is open now).
+  let alive = true;
   let grid = null;
   let books = [];
   let queryStr = "";
@@ -26,6 +29,7 @@ export function mount({ root, query, router }) {
   let page = Number(query?.page) > 0 ? Number(query.page) : 1;
 
   function updateUrl() {
+    if (!alive) return;
     const hash = page > 1 ? `#/?page=${page}` : "#/";
     router?.replaceHash?.(hash);
   }
@@ -160,6 +164,7 @@ export function mount({ root, query, router }) {
   async function load() {
     gridHost.replaceChildren(gridSkeleton());
     const result = await getAllBooks();
+    if (!alive) return;
     continueList.setBooks(result.books);
     books = result.books.filter((book) => book.source === "catalog");
     if (result.catalogError) {
@@ -185,6 +190,7 @@ export function mount({ root, query, router }) {
 
   return {
     unmount() {
+      alive = false;
       goal.destroy();
       continueList.destroy();
       grid?.destroy();

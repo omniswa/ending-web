@@ -28,6 +28,14 @@ const REMOVED_ELEMENTS = [
   "track",
   "canvas",
   "foreignObject",
+  "foreignobject",
+  // SVG animation can rewrite href/xlink:href to a javascript: URL after
+  // sanitizing; <use> can pull in external documents.
+  "animate",
+  "animateMotion",
+  "animateTransform",
+  "set",
+  "use",
 ].join(",");
 
 const REMOVED_ATTRIBUTES = new Set([
@@ -37,6 +45,9 @@ const REMOVED_ATTRIBUTES = new Set([
   "contenteditable",
   "autofocus",
   "target",
+  "ping", // sends a request when a link is followed
+  "background", // legacy attribute that loads a remote image (table, body)
+  "poster",
 ]);
 const URL_ATTRIBUTES = new Set([
   "href",
