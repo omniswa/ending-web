@@ -2,8 +2,10 @@
 import { h, icon } from "../core/dom.js";
 import { plural } from "../core/utils.js";
 import { openQuoteCard } from "../components/quoteCardDialog.js";
+import { createPagination } from "../components/pagination.js";
 import { emptyState } from "../components/status.js";
 import { toast } from "../components/toast.js";
+import { HIGHLIGHTS_PER_PAGE } from "../config.js";
 import {
   getHighlights,
   removeHighlight,
@@ -12,8 +14,28 @@ import {
 import { getReaderPrefs } from "../services/readerPrefs.js";
 import { subscribeSelect } from "../state/store.js";
 
-export function mount({ root }) {
+export function mount({ root, query, router }) {
+  let alive = true;
   let filter = "all";
+  let page = Number(query?.page) > 0 ? Number(query.page) : 1;
+
+  function updateUrl() {
+    if (!alive) return;
+    const hash = page > 1 ? `#/highlights?page=${page}` : "#/highlights";
+    router?.replaceHash?.(hash);
+  }
+
+  const pagination = createPagination({
+    page,
+    pageSize: HIGHLIGHTS_PER_PAGE,
+    totalItems: 0,
+    onPageChange: (newPage) => {
+      page = newPage;
+      updateUrl();
+      render();
+    },
+    scrollTo: () => document.querySelector(".page-header"),
+  });
 
   const count = h("p", { class: "page-header__sub" });
   const select = h("select", {
@@ -21,6 +43,8 @@ export function mount({ root }) {
     "aria-label": "Filter by book",
     onchange: () => {
       filter = select.value;
+      page = 1;
+      updateUrl();
       render();
     },
   });
@@ -129,6 +153,11 @@ export function mount({ root }) {
       : "Passages you highlight while reading are collected here.";
 
     if (!all.length) {
+      pagination.update({
+        totalItems: 0,
+        page: 1,
+        pageSize: HIGHLIGHTS_PER_PAGE,
+      });
       body.replaceChildren(
         emptyState({
           iconName: "quote",
@@ -146,12 +175,34 @@ export function mount({ root }) {
 
     const visible =
       filter === "all" ? all : all.filter((entry) => entry.bookId === filter);
+    // Keep the page in range (e.g. after removing the last item on a page).
+    const totalPages = Math.ceil(visible.length / HIGHLIGHTS_PER_PAGE) || 1;
+    const clamped = Math.min(Math.max(1, page), totalPages);
+    if (clamped !== page) {
+      page = clamped;
+      updateUrl();
+    }
+
+    const start = (page - 1) * HIGHLIGHTS_PER_PAGE;
+    const paged = visible.slice(start, start + HIGHLIGHTS_PER_PAGE);
+    pagination.update({
+      totalItems: visible.length,
+      page,
+      pageSize: HIGHLIGHTS_PER_PAGE,
+    });
     body.replaceChildren(
-      h("ul", { class: "highlights__list" }, visible.map(item)),
+      h("ul", { class: "highlights__list" }, paged.map(item)),
+      pagination.el,
     );
   }
 
   const unsubscribe = subscribeSelect((s) => s.highlights, render);
 
-  return { unmount: unsubscribe };
+  return {
+    unmount() {
+      alive = false;
+      unsubscribe();
+      pagination.destroy();
+    },
+  };
 }

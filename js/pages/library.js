@@ -12,6 +12,7 @@ import {
   listOwnedBooks,
   removeOwnedBook,
 } from "../services/library.js";
+import { removeHighlightsForBook } from "../services/highlights.js";
 import { forgetBook } from "../services/progress.js";
 
 export function mount({ root, query, router }) {
@@ -146,13 +147,14 @@ export function mount({ root, query, router }) {
   async function remove(book) {
     const ok = await confirmDialog({
       title: "Remove this book?",
-      message: `“${book.title}” and its reading progress will be deleted from this device. Your original file is not affected.`,
+      message: `“${book.title}”, its reading progress and its highlights will be deleted from this device. Your original file is not affected.`,
       confirmLabel: "Remove book",
       danger: true,
     });
     if (!ok) return;
     await removeOwnedBook(book.id);
     forgetBook(book.id);
+    removeHighlightsForBook(book.id);
     toast("Book removed");
     await load();
   }

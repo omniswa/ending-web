@@ -144,6 +144,17 @@ export function restoreHighlight(highlight) {
   );
 }
 
+/** Removes every highlight saved for a book (used when an imported book is deleted). Returns how many were removed. */
+export function removeHighlightsForBook(bookId) {
+  const count = getHighlights().filter((item) => item.bookId === bookId).length;
+  if (!count) return 0;
+  appStore.update((s) => ({
+    ...s,
+    highlights: s.highlights.filter((item) => item.bookId !== bookId),
+  }));
+  return count;
+}
+
 export function removeHighlight(id) {
   appStore.update((s) =>
     s.highlights.some((item) => item.id === id)
