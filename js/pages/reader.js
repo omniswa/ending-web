@@ -551,7 +551,7 @@ function createReaderView({ book, epub, backHref, jump }) {
       updateChapterUi();
       if (jump) {
         showChapter(chapter, { highlightId: jump.highlightId });
-        toast("Opened from a highlight.", {
+        toast("Opened from highlights.", {
           duration: 8000,
           action: {
             label: "Go to saved progress",

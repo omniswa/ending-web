@@ -213,7 +213,7 @@
 .prose :is(h1, h2, h3, h4, h5, h6) {
   margin: 1.6em 0 0.6em;
   line-height: 1.25;
-  text-align: left;
+  text-align: center;
   letter-spacing: 0;
   text-wrap: balance;
 }
@@ -241,6 +241,8 @@
   max-width: 100%;
   height: auto;
   margin-inline: auto;
+  background: var(--r-muted);
+  padding: 1em;
 }
 .prose pre {
   overflow-x: auto;
