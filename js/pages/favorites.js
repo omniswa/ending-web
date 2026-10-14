@@ -16,6 +16,8 @@ const FILTERS = [
 ];
 
 export function mount({ root, query, router }) {
+  // Set to false on unmount so async work that finishes later does nothing.
+  let alive = true;
   let books = [];
   let filter = "all";
   let grid = null;
@@ -23,6 +25,7 @@ export function mount({ root, query, router }) {
   let page = Number(query?.page) > 0 ? Number(query.page) : 1;
 
   function updateUrl() {
+    if (!alive) return;
     const hash = page > 1 ? `#/favorites?page=${page}` : "#/favorites";
     router?.replaceHash?.(hash);
   }
@@ -147,6 +150,7 @@ export function mount({ root, query, router }) {
   (async function load() {
     body.replaceChildren(gridSkeleton());
     const result = await getAllBooks();
+    if (!alive) return;
     books = result.books;
     if (result.catalogError && !books.length) {
       body.replaceChildren(
@@ -170,6 +174,7 @@ export function mount({ root, query, router }) {
 
   return {
     unmount() {
+      alive = false;
       unsubscribe();
       grid?.destroy();
       pagination.destroy();

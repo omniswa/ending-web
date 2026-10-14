@@ -15,12 +15,16 @@ import {
 import { forgetBook } from "../services/progress.js";
 
 export function mount({ root, query, router }) {
+  // Set to false on unmount. An import keeps running in the background (its
+  // data work should finish), but it no longer touches this page's UI or URL.
+  let alive = true;
   let grid = null;
   let busy = false;
   let ownedBooks = [];
   let page = Number(query?.page) > 0 ? Number(query.page) : 1;
 
   function updateUrl() {
+    if (!alive) return;
     const hash = page > 1 ? `#/library?page=${page}` : "#/library";
     router?.replaceHash?.(hash);
   }
@@ -203,7 +207,9 @@ export function mount({ root, query, router }) {
 
   async function load() {
     try {
-      ownedBooks = await listOwnedBooks();
+      const loaded = await listOwnedBooks();
+      if (!alive) return;
+      ownedBooks = loaded;
       renderShelf();
       if (page > 1) {
         requestAnimationFrame(() => {
@@ -214,6 +220,7 @@ export function mount({ root, query, router }) {
       }
     } catch (error) {
       console.error(error);
+      if (!alive) return;
       pagination.update({ totalItems: 0, page: 1, pageSize: BOOKS_PER_PAGE });
       body.replaceChildren(
         errorState({
@@ -228,6 +235,7 @@ export function mount({ root, query, router }) {
 
   return {
     unmount: () => {
+      alive = false;
       grid?.destroy();
       pagination.destroy();
     },

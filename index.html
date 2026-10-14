@@ -2,6 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!--
+      Second line of defence if a malicious EPUB ever gets past the sanitizer.
+      If you host covers or EPUBs on another origin, add it to img-src / connect-src.
+      'unsafe-inline' for styles is needed because the UI sets style attributes.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://picsum.photos https://fastly.picsum.photos; connect-src 'self' data: blob:; font-src 'self'; media-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'"
+    />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"

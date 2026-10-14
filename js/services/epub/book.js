@@ -264,11 +264,15 @@ export class EpubBook {
     const doc = parseMarkup(await this.#zip.readText(chapter.path));
     const body = firstByName(doc, "body") ?? doc.documentElement;
 
+    // Sanitize and rewrite while the markup is still inside the inert parsed
+    // document. Importing it into the live page first would let the browser
+    // start fetching <img src> (and similar) before they are stripped.
+    sanitize(body);
+    this.#rewriteLinks(body, chapter.path);
+    await this.#rewriteImages(body, chapter.path);
+
     const node = document.createElement("div");
     node.append(...document.importNode(body, true).childNodes);
-    sanitize(node);
-    this.#rewriteLinks(node, chapter.path);
-    await this.#rewriteImages(node, chapter.path);
     return { node };
   }
 
